@@ -17,11 +17,11 @@ void LED_Config(void){
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_Init(GPIOD, &GPIO_InitStructure);
-	/*	PORT D Push-Pull 10MHz Outputs:	*\
+	/*	PORT C Push-Pull 10MHz Outputs:	*\
 		PC.10	LEDDP
 		PC.11	LEDC
 		PC.12	LEDD					*/
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
@@ -42,32 +42,32 @@ void LED_Set(u8 mask, u8 newState, u8 blink){
 		Led.blink |= (blink & 1<<1);
 	}
 	if(mask & 1<<2){
-		GPIO_WriteBit(LEDC_GPIO, LEDC_PIN, ((newState & 1<<1)?Bit_SET:Bit_RESET));
+		GPIO_WriteBit(LEDC_GPIO, LEDC_PIN, ((newState & 1<<2)?Bit_SET:Bit_RESET));
 		Led.blink &= (blink | ~(1<<2));
 		Led.blink |= (blink & 1<<2);
 	}
 	if(mask & 1<<3){
-		GPIO_WriteBit(LEDD_GPIO, LEDD_PIN, ((newState & 1<<1)?Bit_SET:Bit_RESET));
+		GPIO_WriteBit(LEDD_GPIO, LEDD_PIN, ((newState & 1<<3)?Bit_SET:Bit_RESET));
 		Led.blink &= (blink | ~(1<<3));
 		Led.blink |= (blink & 1<<3);
 	}
 	if(mask & 1<<4){
-		GPIO_WriteBit(LEDE_GPIO, LEDE_PIN, ((newState & 1<<1)?Bit_SET:Bit_RESET));
+		GPIO_WriteBit(LEDE_GPIO, LEDE_PIN, ((newState & 1<<4)?Bit_SET:Bit_RESET));
 		Led.blink &= (blink | ~(1<<4));
 		Led.blink |= (blink & 1<<4);
 	}
 	if(mask & 1<<5){
-		GPIO_WriteBit(LEDF_GPIO, LEDF_PIN, ((newState & 1<<1)?Bit_SET:Bit_RESET));
+		GPIO_WriteBit(LEDF_GPIO, LEDF_PIN, ((newState & 1<<5)?Bit_SET:Bit_RESET));
 		Led.blink &= (blink | ~(1<<5));
 		Led.blink |= (blink & 1<<5);
 	}
 	if(mask & 1<<6){
-		GPIO_WriteBit(LEDG_GPIO, LEDG_PIN, ((newState & 1<<1)?Bit_SET:Bit_RESET));
+		GPIO_WriteBit(LEDG_GPIO, LEDG_PIN, ((newState & 1<<6)?Bit_SET:Bit_RESET));
 		Led.blink &= (blink | ~(1<<6));
 		Led.blink |= (blink & 1<<6);
 	}
 	if(mask & 1<<7){
-		GPIO_WriteBit(LEDDP_GPIO, LEDDP_PIN, ((newState & 1<<1)?Bit_SET:Bit_RESET));
+		GPIO_WriteBit(LEDDP_GPIO, LEDDP_PIN, ((newState & 1<<7)?Bit_SET:Bit_RESET));
 		Led.blink &= (blink | ~(1<<7));
 		Led.blink |= (blink & 1<<7);
 	}

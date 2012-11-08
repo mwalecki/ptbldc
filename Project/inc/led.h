@@ -3,6 +3,22 @@
 
 #include "common.h"
 
+//##                                      #### ######## ################ LED patterns:
+#define LED_ALL	0xff
+#define LED_A	1<<0
+#define LED_B	1<<1
+#define LED_C	1<<2
+#define LED_D	1<<3
+#define LED_E	1<<4
+#define LED_F	1<<5
+#define LED_G	1<<6
+#define LED_DP	1<<7
+#define LED_DIGIT		0x7f
+#define LED_symMINUS	LED_G
+#define LED_symS		LED_A|LED_F|LED_G|LED_C|LED_D
+#define LED_symP		LED_A|LED_F|LED_B|LED_G|LED_E
+
+
 //##                                      #### ######## ################ LED port map:
 #if defined MW1110A || defined MW1110B
 	#define LED_APB2PERIPH	RCC_APB2Periph_GPIOD
@@ -42,13 +58,21 @@ void	LED_Set(u8 mask, u8 newState, u8 blink);
 void	LED_Set(u8 mask, u8 newState, u8 blink);
 void	LED_Proc(void);
 
-u8		LED1_isON(void);
-void	LED1_ON(void);
-void	LED1_OFF(void);
-void	LED1_TOGGLE(void);
-u8		LED2_isON(void);
-void	LED2_ON(void);
-void	LED2_OFF(void);
-void	LED2_TOGGLE(void);
+void	LEDA_ON(void);
+void	LEDA_OFF(void);
+void	LEDB_ON(void);
+void	LEDB_OFF(void);
+void	LEDC_ON(void);
+void	LEDC_OFF(void);
+void	LEDD_ON(void);
+void	LEDD_OFF(void);
+void	LEDE_ON(void);
+void	LEDE_OFF(void);
+void	LEDF_ON(void);
+void	LEDF_OFF(void);
+void	LEDG_ON(void);
+void	LEDG_OFF(void);
+void	LEDDP_ON(void);
+void	LEDDP_OFF(void);
 
 #endif	// ifndef _LED_H_

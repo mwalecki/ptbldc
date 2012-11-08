@@ -61,15 +61,10 @@ int main(void)
 	// NFv2_Config() may set some data in NFComBuf to current values
 	// read from already initiated peripherals.
 //	NFv2_Config(&NFComBuf, NF_AddressBase);
-	
 
-//	LED_Set(1<<0 | 1<<1, 	//mask
-//			1<<0 | 0<<1,	//newState
-//			1<<0 | 0<<1);	//blink
-	LED_Set(0xff, 	//mask
-			0xff,	//newState
-			0xff);	//blink
-
+	LED_Set(LED_ALL, 		//mask
+			LED_symMINUS,	//newState
+			LED_DP);		//blink
 
 
 	//#### MAIN LOOP ####//
@@ -101,14 +96,14 @@ int main(void)
 		//#### #### 		USB 	
 		//#### #### #### #### #### #### ####
 		if(bDeviceState == CONFIGURED){
-			LED_Set(0<<0 | 1<<1, 	//mask
-					0<<0 | 1<<1,	//newState
-					0<<0 | 0<<1);	//blink
+//			LED_Set(0<<0 | 1<<1, 	//mask
+//					0<<0 | 1<<1,	//newState
+//					0<<0 | 0<<1);	//blink
 		}
 		else{
-			LED_Set(0<<0 | 1<<1, 	//mask
-					0<<0 | 0<<1,	//newState
-					0<<0 | 0<<1);	//blink
+//			LED_Set(0<<0 | 1<<1, 	//mask
+//					0<<0 | 0<<1,	//newState
+//					0<<0 | 0<<1);	//blink
 		}
 
 		if(NFComBuf.dataReceived){
