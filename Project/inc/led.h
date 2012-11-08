@@ -17,6 +17,10 @@
 #define LED_symMINUS	LED_G
 #define LED_symS		LED_A|LED_F|LED_G|LED_C|LED_D
 #define LED_symP		LED_A|LED_F|LED_B|LED_G|LED_E
+#define LED_symu		LED_C|LED_D|LED_E
+#define LED_symU		LED_B|LED_C|LED_D|LED_E|LED_F
+#define LED_symc		LED_D|LED_E|LED_G
+#define LED_symC		LED_D|LED_E|LED_F|LED_A
 
 
 //##                                      #### ######## ################ LED port map:

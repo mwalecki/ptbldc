@@ -15,8 +15,8 @@
 #define ST_Period4			50
 #define ST_Servo		5
 #define ST_Period5			10
-#define ST_ADC			6
-#define ST_Period6			1500
+#define ST_Monitor		6
+#define ST_Period6			1000
 #define ST_Downcounters	7
 
 #define ST_Period(n)	ST_Period ## n

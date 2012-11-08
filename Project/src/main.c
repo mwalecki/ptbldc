@@ -26,6 +26,9 @@ NF_STRUCT_ComBuf 	NFComBuf;
 PID_St				PID[3];
 MOTOR_St			Motor[1];
 
+//##                                      #### ######## ################ PROTOTYPES
+void SystemMonitor(void);
+
 //##                                      #### ######## ################ MAIN
 int main(void)									  
 {
@@ -52,7 +55,7 @@ int main(void)
 //	PID_LoadDefaults(&PID[2]);
 //	ADCwithDMA_Config();
 	NVIC_Configuration();
-//	USB_Config();
+	USB_Config();
 //	PID_Init(&PID[0]);
 //	PID_Init(&PID[1]);
 //	PID_Init(&PID[2]);
@@ -93,19 +96,13 @@ int main(void)
 		//	USART1_SendString("\r\n\n");
 		//	USART1_SendNBytes("test\r\n", 6);
 		}	
-		//#### #### 		USB 	
-		//#### #### #### #### #### #### ####
-		if(bDeviceState == CONFIGURED){
-//			LED_Set(0<<0 | 1<<1, 	//mask
-//					0<<0 | 1<<1,	//newState
-//					0<<0 | 0<<1);	//blink
-		}
-		else{
-//			LED_Set(0<<0 | 1<<1, 	//mask
-//					0<<0 | 0<<1,	//newState
-//					0<<0 | 0<<1);	//blink
+		if(STDownCnt[ST_Monitor].tick){
+			STDownCnt[ST_Monitor].tick = 0;
+			SystemMonitor();
 		}
 
+		//#### #### 		COMMUNICATION
+		//#### #### #### #### #### #### ####
 		if(NFComBuf.dataReceived){
 			if(NFComBuf.SetDigitalOutputs.updated){
 				OUT_Set(NFComBuf.SetDigitalOutputs.data[0]);
@@ -172,5 +169,15 @@ int main(void)
 		//	}
 	    }
 	} //####  END main while LOOP ####//
+}
+
+void SystemMonitor(void){
+	static uint32_t oldDevSate = UNCONNECTED;
 	
+	if((bDeviceState != oldDevSate) && (bDeviceState == CONFIGURED)){
+		LED_Set(LED_DIGIT, 		//mask
+				LED_symu,		//newState
+				0);		//blink
+		oldDevSate = bDeviceState;
+	}
 }

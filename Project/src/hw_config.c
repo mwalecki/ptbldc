@@ -179,6 +179,7 @@ void USB_Interrupts_Config(void)
 *******************************************************************************/
 void USB_Cable_Config (FunctionalState NewState)
 {
+#ifdef USB_CONNECT_PORT
 	if (NewState != DISABLE)
 	{
 		GPIO_SetBits(USB_CONNECT_PORT, USB_CONNECT_PIN);
@@ -187,6 +188,7 @@ void USB_Cable_Config (FunctionalState NewState)
 	{
 		GPIO_ResetBits(USB_CONNECT_PORT, USB_CONNECT_PIN);
 	}
+#endif
 }
 
 void USART_Config_Default(void)

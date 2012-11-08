@@ -7,24 +7,27 @@ extern uint8_t  USART_Rx_Buffer [USART_RX_DATA_SIZE];
 extern uint32_t USART_Rx_ptr_in;
 
 void USB_Config(void){					  
-//	!!!! NO CONFIGURABLE USB PULLUP in 1110B
-//	GPIO_InitTypeDef GPIO_InitStructure;
-//	// IO Clocks Enable
-//	RCC_APB2PeriphClockCmd(USB_CONNECT_APB, ENABLE);
-//	/*	USB_CONNECT_PORT Push-Pull 10MHz Outputs:	*\
-//		USB_CONNECT_PIN	USB_PullUp					*/
-//	GPIO_InitStructure.GPIO_Pin = USB_CONNECT_PIN;
-//	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
-//	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-//	GPIO_Init(USB_CONNECT_PORT, &GPIO_InitStructure);
+#ifdef USB_CONNECT_PORT
+	GPIO_InitTypeDef GPIO_InitStructure;
+	// IO Clocks Enable
+	RCC_APB2PeriphClockCmd(USB_CONNECT_APB, ENABLE);
+	/*	USB_CONNECT_PORT Push-Pull 10MHz Outputs:	*\
+		USB_CONNECT_PIN	USB_PullUp					*/
+	GPIO_InitStructure.GPIO_Pin = USB_CONNECT_PIN;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Init(USB_CONNECT_PORT, &GPIO_InitStructure);
+#endif
 
 	// USB Init
 	Set_USBClock();
 	USB_Interrupts_Config();			
 	USB_Init();
 
-//	// Enable USBDP PullUp
-//	USB_Cable_Config(ENABLE);
+#ifdef USB_CONNECT_PORT
+	// Enable USBDP PullUp
+	USB_Cable_Config(ENABLE);
+#endif
 }
 
 void USB_SendNBytes(uint8_t* buf, uint16_t cnt){
