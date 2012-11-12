@@ -19,6 +19,9 @@ void USB_Config(void){
 	GPIO_Init(USB_CONNECT_PORT, &GPIO_InitStructure);
 #endif
 
+	//USART_Rx_ptr_in = 0;
+	//USB_Rx_Cnt = 0;
+
 	// USB Init
 	Set_USBClock();
 	USB_Interrupts_Config();			

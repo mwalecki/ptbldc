@@ -43,15 +43,15 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 		// Increment rxPt to avoid rxBuf modification during interpretation
 		(*rxPt)++;
 	}
-	//	/\	/\	/\	/\	/\	/\	/\
-	//	||	||	||	||	||	||	||
-	// Do not modify this section
+	/*	/\	/\	/\	/\	/\	/\	/\
+		||	||	||	||	||	||	||
+	    Do not modify this section
 
 	
 	
-	// Here you build your own command parser
-	//	||	||	||	||	||	||	||
-	//	\/	\/	\/	\/	\/	\/	\/
+	    Here you build your own command parser
+		||	||	||	||	||	||	||
+		\/	\/	\/	\/	\/	\/	\/	*/
 
 	_IF_MEMBER_THEN("*IDN?")
 	//	_PRINT_RESPONSE("%s, %s %s \r\n", MODULE_NAME, __DATE__, __TIME__);
@@ -293,21 +293,19 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 			AX12SetSpeed(1, NFComBuf.SetServosSpeed.data[8]);
 		_END_GET_SETANDDO_MEMBER 
 	_ENDGROUP			   */
-	//	/\	/\	/\	/\	/\	/\	/\
-	//	||	||	||	||	||	||	||
-	// Here you build your own command parser
+	/*	/\	/\	/\	/\	/\	/\	/\
+		||	||	||	||	||	||	||
+	    Here you build your own command parser
 	
 	
-	// Do not modify this section
-	//	||	||	||	||	||	||	||
-	//	\/	\/	\/	\/	\/	\/	\/
+	    Do not modify this section
+		||	||	||	||	||	||	||
+		\/	\/	\/	\/	\/	\/	\/ */
 	ret = *rxPt;
 	// Reset rxPt for next incoming command
 	*rxPt = 0;
 	// Return length of received command
-
-	if(txBuf[0] == '\0')
-		return ret;
+	return ret;
 }
 
 /**
@@ -316,7 +314,7 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
  * Released under GPLv3.
  * Modified to return string length
  */
-int my_itoa_crlf(int value, char* result, int base) {
+int my_itoa(int value, char* result, int base) {
 	int len = 0;
 	// check that the base if valid
 	if (base < 2 || base > 36) {
@@ -336,18 +334,15 @@ int my_itoa_crlf(int value, char* result, int base) {
 	// Apply negative sign
 	if (tmp_value < 0)
 		*ptr++ = '-';
-	// add CR+LF suffix
-	*ptr = '\r';
-	*(ptr+1) = '\n';
-	*(ptr+2) = '\0';
+	*(ptr) = '\0';
 	ptr--;
 	// calculate string length
-	len = ptr + 2 - result;
+	len = ptr +1 - result;
 
 	while(ptr1 < ptr) {
 		tmp_char = *ptr;
 		*ptr--= *ptr1;
 		*ptr1++ = tmp_char;
 	}
-	return result;
+	return len;
 }

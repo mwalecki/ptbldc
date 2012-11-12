@@ -32,16 +32,16 @@ void SystemMonitor(void);
 //##                                      #### ######## ################ MAIN
 int main(void)									  
 {
-	uint8_t usartBytesToSend, usbBytesToSend1, usbBytesToSend2, usbLastByteReceived;
+	uint8_t usartBytesToSend=0, usbBytesToSend1=0, usbBytesToSend2=0, usbLastByteReceived=0;
 	uint8_t commArray[10];
-	uint8_t commCnt;
+	uint8_t commCnt=0;
 	
 	// First init System Clock
 	RCC_Configuration();	// Init system clock
 	
 	// Init nonvolatile memory and recover saved values of peirpherals data buffers
-	EEPROM_Init(0);
-	eebackup_Recover();
+//	EEPROM_Init(0);
+//	eebackup_Recover();
 
 	// Then init peripherals
 	SYSTICK_Init(STDownCnt);
@@ -63,7 +63,7 @@ int main(void)
 	// Execute NFv2_Config() after init of all peripherals. 
 	// NFv2_Config() may set some data in NFComBuf to current values
 	// read from already initiated peripherals.
-//	NFv2_Config(&NFComBuf, NF_AddressBase);
+	NFv2_Config(&NFComBuf, NF_AddressBase);
 
 	LED_Set(LED_ALL, 		//mask
 			LED_symMINUS,	//newState
@@ -92,6 +92,8 @@ int main(void)
 		if(STDownCnt[ST_StatusLed].tick){	
 			STDownCnt[ST_StatusLed].tick = 0;
 			LED_Proc();
+//			if(bDeviceState == CONFIGURED)
+//				USB_SendNBytes("dupa\r\n", 6);
 		//	USART1_SendString(Usart1.rxBuf);
 		//	USART1_SendString("\r\n\n");
 		//	USART1_SendNBytes("test\r\n", 6);
@@ -136,11 +138,6 @@ int main(void)
 				NFComBuf.SetPositionRegulator.updated = 0;
 			}
 			NFComBuf.dataReceived = 0;
-		}
-		// if there is a request to send command to LCD Module over USART1
-		if(commCnt > 0){
-			usartBytesToSend = NF_MakeCommandFrame(&NFComBuf, (uint8_t*)Usart1.txBuf, (const uint8_t*)commArray, commCnt, NF_AddressLCDModule);
-			USART1_SendNBytes((uint8_t*)Usart1.txBuf, usartBytesToSend);
 		}
 
 		if(USB_RxBufNotEmpty()) {
