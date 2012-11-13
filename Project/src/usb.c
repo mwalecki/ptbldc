@@ -5,6 +5,8 @@ extern uint16_t USB_Rx_Cnt;
 
 extern uint8_t  USART_Rx_Buffer [USART_RX_DATA_SIZE]; 
 extern uint32_t USART_Rx_ptr_in;
+extern uint32_t USART_Rx_ptr_out;
+extern uint32_t USART_Rx_length;
 
 void USB_Config(void){					  
 #ifdef USB_CONNECT_PORT
@@ -18,9 +20,10 @@ void USB_Config(void){
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_Init(USB_CONNECT_PORT, &GPIO_InitStructure);
 #endif
-
-	//USART_Rx_ptr_in = 0;
-	//USB_Rx_Cnt = 0;
+//	USART_Rx_ptr_in = 0;
+//	USB_Rx_Cnt = 0;
+//	USART_Rx_ptr_out = 0;
+//	USART_Rx_length = 0;
 
 	// USB Init
 	Set_USBClock();

@@ -7,6 +7,7 @@
 #include "systick.h"
 #include "interrupts.h"
 #include "motor.h"
+#include "encoder.h"
 #include "adc.h"
 #include "eeprom.h"
 #include "eebackup.h"
@@ -32,9 +33,9 @@ void SystemMonitor(void);
 //##                                      #### ######## ################ MAIN
 int main(void)									  
 {
-	uint8_t usartBytesToSend=0, usbBytesToSend1=0, usbBytesToSend2=0, usbLastByteReceived=0;
+	uint8_t usartBytesToSend, usbBytesToSend1, usbBytesToSend2, usbLastByteReceived;
 	uint8_t commArray[10];
-	uint8_t commCnt=0;
+	uint8_t commCnt;
 	
 	// First init System Clock
 	RCC_Configuration();	// Init system clock
@@ -50,6 +51,7 @@ int main(void)
 //	OUT_Config();
 //	USART1_Config();
 //	MOTORS1234_Config();
+	ENCODER1_Config();
 //	PID_LoadDefaults(&PID[0]);
 //	PID_LoadDefaults(&PID[1]);
 //	PID_LoadDefaults(&PID[2]);
@@ -92,8 +94,11 @@ int main(void)
 		if(STDownCnt[ST_StatusLed].tick){	
 			STDownCnt[ST_StatusLed].tick = 0;
 			LED_Proc();
-//			if(bDeviceState == CONFIGURED)
-//				USB_SendNBytes("dupa\r\n", 6);
+			if(bDeviceState == CONFIGURED){
+				usbBytesToSend1 = my_itoa(ENCODER1_Position(), USBBufs1.txBuf, 10);
+				USB_SendNBytes(USBBufs1.txBuf, usbBytesToSend1);
+				USB_SendNBytes("\r\n", 2);
+			}
 		//	USART1_SendString(Usart1.rxBuf);
 		//	USART1_SendString("\r\n\n");
 		//	USART1_SendNBytes("test\r\n", 6);

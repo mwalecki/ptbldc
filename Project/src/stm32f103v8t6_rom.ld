@@ -1,186 +1,113 @@
-/*
-Default linker script for STM32F10x_128K_20K
-Original Copyright RAISONANCE S.A.S. 2008
-Modified P Harrison May 2009
-*/
-
-/*
-* Default stack sizes.
-*
-* These are used by the startup in order to allocate stacks for the different modes.
-* PROVIDE" allows to easily override these values from an object file or the commmand line.
-*/
-
-__Stack_Size = 1024 ;
-PROVIDE ( _Stack_Size = __Stack_Size ) ;
-__Stack_Init = _estack - __Stack_Size ;
-PROVIDE ( _Stack_Init = __Stack_Init ) ;
-
-/*
-*There will be a link error if there is not this amount of RAM free at the end.
-*/
-_Minimum_Stack_Size = 0x100 ;
-
-
+/******************************************************************************
+ * This linker file was developed by Hussam Al-Hertani. Please use freely as
+ * long as you leave this header in place. The author is not responsible for any
+ * damage or liability that this file might cause.
+******************************************************************************/
+ 
+/* Entry Point */
+ENTRY(Reset_Handler)
+ 
+/* Specify the memory areas */
 MEMORY
 {
-	RAM (xrw) : ORIGIN = 0x20000000, LENGTH = 20K
-    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 64K
+  FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 0x10000 /*64K*/
+  RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 0x05000 /*20K*/
 }
-
-/* higher address of the user mode stack */
+ 
+/* define stack size and heap size here */
+stack_size = 1024;
+heap_size = 256;
+ 
 _estack = 0x20005000;
-
+ 
+/* define beginning and ending of stack */
+_stack_start = ORIGIN(RAM)+LENGTH(RAM);
+_stack_end = _stack_start - stack_size;
+ 
+/* Define output sections */
 SECTIONS
 {
-/*
-* for Cortex devices, the beginning of the startup code is stored in the .isr_vector section,
-* which goes to FLASH
-*/
-.isr_vector :
+  /* The startup code goes first into FLASH */
+  .isr_vector :
+  {
+    . = ALIGN(4);
+    KEEP(*(.isr_vector)) /* Startup code */
+    . = ALIGN(4);
+  } >FLASH
+ 
+  /* The program code and other data goes into FLASH */
+  .text :
+  {
+    . = ALIGN(4);
+    *(.text)           /* .text sections (code) */
+    *(.text*)          /* .text* sections (code) */
+    *(.rodata)         /* .rodata sections (constants, strings, etc.) */
+    *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
+    *(.glue_7)         /* glue arm to thumb code */
+    *(.glue_7t)        /* glue thumb to arm code */
+    . = ALIGN(4);
+    _etext = .;        /* define a global symbols at end of code */
+  } >FLASH
+ 
+   .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
+    .ARM : {
+    __exidx_start = .;
+      *(.ARM.exidx*)
+      __exidx_end = .;
+    } >FLASH
+ 
+  /* used by the startup to initialize data */
+  _sidata = .;
+ 
+  /* Initialized data sections goes into RAM, load LMA copy after code */
+  .data : AT ( _sidata )
+  {
+    . = ALIGN(4);
+    _sdata = .;        /* create a global symbol at data start */
+    *(.data)           /* .data sections */
+    *(.data*)          /* .data* sections */
+ 
+    . = ALIGN(4);
+    _edata = .;        /* define a global symbol at data end */
+  } >RAM
+ 
+  /* Uninitialized data section */
+  . = ALIGN(4);
+  .bss :
+  {
+    /*  Used by the startup in order to initialize the .bss secion */
+    _sbss = .;         /* define a global symbol at bss start */
+    __bss_start__ = _sbss;
+    *(.bss)
+    *(.bss*)
+    *(COMMON)
+ 
+    . = ALIGN(4);
+    _ebss = .;         /* define a global symbol at bss end */
+    __bss_end__ = _ebss;
+  } >RAM
+ 
+    . = ALIGN(4);
+    .heap :
     {
-. = ALIGN(4);
-KEEP(*(.isr_vector)) /* Startup code */
-. = ALIGN(4);
-} >FLASH
-
-/*
-* for some STRx devices, the beginning of the startup code is stored in the .flashtext section,
-* which goes to FLASH
-*/
-.flashtext :
+        _heap_start = .;
+        . = . + heap_size;
+    } > RAM
+ 
+    . = ALIGN(4);
+    . = _stack_end;
+    .stack :
     {
-. = ALIGN(4);
-KEEP (*(.flashtext)) /* Startup code */
-. = ALIGN(4);
-} >FLASH
-    
-    /*
-* the program code is stored in the .text section, which goes to Flash
-*/
-.text :
-{
-. = ALIGN(4);
-*(.text) /* remaining code */
-        *(.text.*) /* remaining code */
-        *(.rodata) /* read-only data (constants) */
-        *(.rodata*)
-        *(.glue_7)
-        *(.glue_7t)
-. = ALIGN(4);
-_etext = .;
-_sidata = _etext; /* Uused by the startup in order to initialize the .data secion */
-} >FLASH
-    
-/*
-* This is the initialized data section. It is stored in RAM but the initial values
-* are held in flash and copied to RAM by the startup code
-*/
-.data : AT ( _sidata ) /* AT makes the LMA follow on in the binary image */
+        . = . + stack_size;
+    } > RAM
+ 
+    /* Remove information from the standard libraries */
+    /DISCARD/ :
     {
-. = ALIGN(4);
-_sdata = . ; /* Used by the startup in order to initialize the .data section */
-        KEEP( *(.data) )
-        KEEP( *(.data.*) )
-. = ALIGN(4);
-_edata = . ; /* Used by the startup in order to initialize the .data section */
-} >RAM
-
-
-/*
- http://embdev.net/topic/129753
-
-.bss :
-{
-  _bss = .;
-  *(.bss*)
-  *(COMMON)
-  _ebss = .;
-  . = ALIGN (8);
-  _end = .;
-} > SRAM
-
-PROVIDE(__HEAP_START = _end );
-*/
-
-/*
-* This is the uninitialized data section. Date here is stored in RAM and will be
-* set to zero by the startup code.
-*/
-.bss :
-    {
-. = ALIGN(4);
-_sbss = .; /* Used by the startup in order to initialize the .bss section */
-        *(.bss)
-        *(COMMON)
-        . = ALIGN(4);
-_ebss = . ; /* Used by the startup in order to initialize the .bss section */
-} >RAM
-    
-PROVIDE ( end = _ebss );
-PROVIDE ( _end = _ebss );
-PROVIDE ( __HEAP_START = _ebss ); 
-
-/*
-* This is the user stack section
-* This is just to check that there is enough RAM left for the User mode stack
-* It should generate an error if it's full.
-*/
-._usrstack :
-    {
-. = ALIGN(4);
-_susrstack = . ;
-. = . + _Minimum_Stack_Size ;
-. = ALIGN(4);
-_eusrstack = . ;
-} >RAM
-    
-/*
-* after that it's only debugging information.
-*/
-
-/* remove the debugging information from the standard libraries */
-/DISCARD/ :
-{
-libc.a ( * )
-libm.a ( * )
-libgcc.a ( * )
-}
-
-/* Stabs debugging sections. */
-.stab 0 : { *(.stab) }
-    .stabstr 0 : { *(.stabstr) }
-    .stab.excl 0 : { *(.stab.excl) }
-    .stab.exclstr 0 : { *(.stab.exclstr) }
-    .stab.index 0 : { *(.stab.index) }
-    .stab.indexstr 0 : { *(.stab.indexstr) }
-    .comment 0 : { *(.comment) }
-/*
-* DWARF debug sections.
-* Symbols in the DWARF debugging sections are relative to the beginning
-* of the section so we begin them at 0.
-*/
-
-/* DWARF 1 */
-.debug 0 : { *(.debug) }
-    .line 0 : { *(.line) }
-/* GNU DWARF 1 extensions */
-.debug_srcinfo 0 : { *(.debug_srcinfo) }
-    .debug_sfnames 0 : { *(.debug_sfnames) }
-/* DWARF 1.1 and DWARF 2 */
-.debug_aranges 0 : { *(.debug_aranges) }
-    .debug_pubnames 0 : { *(.debug_pubnames) }
-/* DWARF 2 */
-.debug_info 0 : { *(.debug_info .gnu.linkonce.wi.*) }
-    .debug_abbrev 0 : { *(.debug_abbrev) }
-    .debug_line 0 : { *(.debug_line) }
-    .debug_frame 0 : { *(.debug_frame) }
-    .debug_str 0 : { *(.debug_str) }
-    .debug_loc 0 : { *(.debug_loc) }
-    .debug_macinfo 0 : { *(.debug_macinfo) }
-/* SGI/MIPS DWARF 2 extensions */
-.debug_weaknames 0 : { *(.debug_weaknames) }
-    .debug_funcnames 0 : { *(.debug_funcnames) }
-    .debug_typenames 0 : { *(.debug_typenames) }
-    .debug_varnames 0 : { *(.debug_varnames) }
+        libc.a ( * )
+        libm.a ( * )
+        libgcc.a ( * )
+    }
+ 
+    .ARM.attributes 0 : { *(.ARM.attributes) }
 }
