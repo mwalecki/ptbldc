@@ -69,7 +69,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Project/src/stm32f10x_it.c|Library/CMSIS_2-10/Device/ST/STM32L1xx|Library/CMSIS_2-10/Device/ST/STM32F10x/Source/Templates/system_stm32f10x.c|Library/CMSIS_2-10/Device/ST/STM32F10x/Source/Templates/TrueSTUDIO|Library/CMSIS_2-10/Device/ST/STM32F10x/Source/Templates/TASKING|Library/CMSIS_2-10/Device/ST/STM32F10x/Source/Templates/iar|Library/CMSIS_2-10/Device/ST/STM32F10x/Source/Templates/gcc_ride7|Library/CMSIS_2-10/Device/ST/STM32F10x/Source/Templates/arm|ExternalCommonTools/myscpi/copy_to_project_src_and_modify|ExternalCommonTools/wincomport" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Project/src/encoder.c|Project/src/stm32f10x_it.c|Library/CMSIS_2-10/Device/ST/STM32L1xx|Library/CMSIS_2-10/Device/ST/STM32F10x/Source/Templates/system_stm32f10x.c|Library/CMSIS_2-10/Device/ST/STM32F10x/Source/Templates/TrueSTUDIO|Library/CMSIS_2-10/Device/ST/STM32F10x/Source/Templates/TASKING|Library/CMSIS_2-10/Device/ST/STM32F10x/Source/Templates/iar|Library/CMSIS_2-10/Device/ST/STM32F10x/Source/Templates/gcc_ride7|Library/CMSIS_2-10/Device/ST/STM32F10x/Source/Templates/arm|ExternalCommonTools/myscpi/copy_to_project_src_and_modify|ExternalCommonTools/wincomport" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

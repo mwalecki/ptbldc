@@ -22,9 +22,9 @@ void NFv2_Config(NF_STRUCT_ComBuf *NFComBuf, uint8_t myAddress){
 
 	NFComBuf->dataReceived = 1;
 
-/*	NFComBuf->ReadAnalogInputs.addr[0] = NF_AddressBase;
+	NFComBuf->ReadAnalogInputs.addr[0] = NF_AddressBase;
 	NFComBuf->ReadAnalogInputs.addr[1] = NF_AddressBase;
-	NFComBuf->ReadAnalogInputs.addr[2] = NF_AddressBase;
+/*	NFComBuf->ReadAnalogInputs.addr[2] = NF_AddressBase;
 	NFComBuf->ReadAnalogInputs.addr[3] = NF_AddressBase;
 	NFComBuf->ReadAnalogInputs.addr[4] = NF_AddressBase;
 	NFComBuf->ReadAnalogInputs.addr[5] = NF_AddressBase;
