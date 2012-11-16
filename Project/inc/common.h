@@ -2,6 +2,7 @@
 #define _COMMON_H_
 
 #include "stm32f10x.h"
+#include <stdint.h>
 
 #define MODULE_NAME			"RobTrain v2"
 #define USART_BufSz			256	 

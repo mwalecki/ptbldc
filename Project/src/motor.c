@@ -1,50 +1,96 @@
 #include "motor.h"
-#include "nfv2.h"
-#include "adc.h"
-#include "pid.h"
 
-extern ADC_St				ADC;
-extern PID_St				PID[3];
-extern MOTOR_St				Motor[3];
-extern NF_STRUCT_ComBuf 	NFComBuf;
+extern MOTOR_St		Motor;
 
-void MOTORS12_Config(void) { 					
+void MOTOR_Proc(void) {
+	static int32_t prevPosition = 0;
+
+	Motor.position = ENCODER1_Position();
+	Motor.speed = Motor.position - prevPosition;
+	prevPosition = Motor.position;
+
+
+}
+
+// BLDC motor steps
+// every row from 1 to 6 is called by a hall state
+// every column a FET from 3-phase bridge
+// motor off is at row 0 BLDC_BRIDGE_STATE_VORWARD[0]
+// cw - rechtslauf - positiv
+// {    1H,1L      ,      2H,2L      ,     3H,3L    }
+// BLDC motor steps
+// every row from 1 to 6 is one of the 6 motor vector state
+// every column a FET from 3-phase bridge
+// all FETs off at row 0 or 8 (this pattern should not come from the hallsensor)
+// cw - rechtslauf - positiv
+// {    1H,1L      ,      2H,2L      ,     3H,3L    }
+static const u8 BLDC_BRIDGE_STATE_FORWARD[8][6] =   // Motor step
+{
+//									BRIDGE	SEQ		HALL
+//												mik.net	Parvalux
+   { 0,0   ,   0,0   ,  0,0 },  //	. . .	0	000		000
+   { 0,0   ,   0,1   ,  1,0 },  //	. L H	4	010		001
+   { 0,1   ,   1,0   ,  0,0 },  //	L H .	2	001		010
+   { 0,1   ,   0,0   ,  1,0 },  //	L . H	3	011		011
+   { 1,0   ,   0,0   ,  0,1 },  //	H . L	6	100		100
+   { 1,0   ,   0,1   ,  0,0 },  //	H L .	5	110		101
+   { 0,0   ,   1,0   ,  0,1 },  //	. H L	1	101		110
+   { 0,0   ,   0,0   ,  0,0 }  //	. . .	0	111		000
+};
+static const u8 BLDC_BRIDGE_STATE_REVERSE[8][6] =   // Motor step
+{
+//									BRIDGE	SEQ		HALL
+//												mik.net	Parvalux
+   { 0,0   ,   0,0   ,  0,0 },  //	. . .	0	000		000
+   { 0,0   ,   1,0   ,  0,1 },  //	. H L	4	010		001
+   { 1,0   ,   0,1   ,  0,0 },  //	H L .	2	001		010
+   { 1,0   ,   0,0   ,  0,1 },  //	H . L	3	011		011
+   { 0,1   ,   0,0   ,  1,0 },  //	L . H	6	100		100
+   { 0,1   ,   1,0   ,  0,0 },  //	L H .	5	110		101
+   { 0,0   ,   0,1   ,  1,0 },  //	. L H	1	101		110
+   { 0,0   ,   0,0   ,  0,0 }  //	. . .	0	111		000
+};
+static const u8 BLDC_BRIDGE_STATE_STILL[8][6] =   // Motor step
+{
+//									BRIDGE	SEQ		HALL
+//												mik.net	Parvalux
+   { 0,0   ,   0,0   ,  0,0 },  //	. . .	0	000		000
+   { 0,0   ,   0,0   ,  0,0 },  //	. . .	4	010		001
+   { 0,0   ,   0,0   ,  0,0 },  //	. . .	2	001		010
+   { 0,0   ,   0,0   ,  0,0 },  //	. . .	3	011		011
+   { 0,0   ,   0,0   ,  0,0 },  //	. . .	6	100		100
+   { 0,0   ,   0,0   ,  0,0 },  //	. . .	5	110		101
+   { 0,0   ,   0,0   ,  0,0 },  //	. . .	1	101		110
+   { 0,0   ,   0,0   ,  0,0 }  //	. . .	0	111		000
+};
+
+void MOTOR_Config(void) {
 	//Configuration Structures
+//	NVIC_InitTypeDef		NVIC_InitStructure;
 	GPIO_InitTypeDef		GPIO_InitStructure;
 	TIM_TimeBaseInitTypeDef	TIM_TimeBaseStructure;
 	TIM_OCInitTypeDef		TIM_OCInitStructure;
+//	TIM_ICInitTypeDef		TIM_ICInitStructure;
 	TIM_BDTRInitTypeDef		TIM_BDTRInitStructure;
 
 	// TIM1 clock enable
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);  				  
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
 	// AFIO Clock Enable
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	// GPIO clocks enable
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOE, ENABLE);
-		
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOE, ENABLE);
+
 	// TIM1 Full Pin Remap
 	GPIO_PinRemapConfig(GPIO_FullRemap_TIM1, ENABLE);
 
-	/*	PORT B Push-Pull 10MHz Outputs:	*\
-		PB.0	M1B						
-		PB.1	M1A						
-		PB.2	M2B						*/
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
-
-	/*	PORT E Push-Pull 10MHz Outputs:	*\
-		PE.7	M2A						*/
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_Init(GPIOE, &GPIO_InitStructure);
-	
-	/*	PORT E Push-Pull 10MHz AF Out:	*\
-		PE.8	M1EN						
-		PE.11	M2EN						*/
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_11;
+	/*	PORT E Push-Pull Outputs:				*\
+		PE.9	(TIM1_CH1)	HIN1
+		PE.11	(TIM1_CH2)	HIN2
+		PE.13	(TIM1_CH3)	HIN3
+		PE.8	(TIM1_CH1N)	LIN1
+		PE.10	(TIM1_CH2N)	LIN2
+		PE.12	(TIM1_CH3N)	LIN3				*/
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12 | GPIO_Pin_13;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_Init(GPIOE, &GPIO_InitStructure);
@@ -52,40 +98,45 @@ void MOTORS12_Config(void) {
 	// Time Base configuration
 	TIM_TimeBaseStructure.TIM_Prescaler = 3;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseStructure.TIM_Period = TIM1PERIOD;		// 72MHz / 3 / (TIM1PERIOD==1000) = 24kHz
+	TIM_TimeBaseStructure.TIM_Period = 1200;		// 24MHz / 1200 = 20kHz
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
 	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
  
-	// TIM1_CH1N: M1EN
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Disable;
-	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
-	TIM_OCInitStructure.TIM_Pulse = TIM1PERIOD;
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
-	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
-	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
-	TIM_OC1Init(TIM1, &TIM_OCInitStructure);
-																
-	// TIM1_CH2: M2EN
+	// Channel 1, 2, 3 set to PWM mode - all 6 outputs
+	// per channel on output is  low side fet, the opposite is for high side fet
+
 	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Disable;
-	TIM_OCInitStructure.TIM_Pulse = 0;
+	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
+	TIM_OCInitStructure.TIM_Pulse = 500; // BLDC_ccr_val
+
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
 	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
 	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
+
+	TIM_OC1Init(TIM1, &TIM_OCInitStructure);
 	TIM_OC2Init(TIM1, &TIM_OCInitStructure);
+	TIM_OC3Init(TIM1, &TIM_OCInitStructure);
+
+	// activate preloading the CCR register
+	TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
+	TIM_OC2PreloadConfig(TIM1, TIM_OCPreload_Enable);
+	TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
  
 	/* automatic output enable, break off, dead time ca. 200ns and  
 	// no lock of configuration */
 	TIM_BDTRInitStructure.TIM_OSSRState = TIM_OSSRState_Enable;
 	TIM_BDTRInitStructure.TIM_OSSIState = TIM_OSSIState_Enable;
 	TIM_BDTRInitStructure.TIM_LOCKLevel = TIM_LOCKLevel_OFF;
+
+	// DeadTime value n=1 bis 31: from 14ns to 1,7us
+	// DeadTime value n=129 bis 159: from 1,7us to 3,5ms
+	// DeadTime value 7 => 98ns
+	// ... see programmers reference manual
 	// DeadTime[ns] = value * (1/SystemCoreFreq) (on 72MHz: 7 is 98ns, on 24MHz: 7 is 296ns)
-	TIM_BDTRInitStructure.TIM_DeadTime = 0;
+	TIM_BDTRInitStructure.TIM_DeadTime = 7;
 	TIM_BDTRInitStructure.TIM_AutomaticOutput = TIM_AutomaticOutput_Enable;
 	 
 	// enabel this if you use emergency stop signal
@@ -94,386 +145,183 @@ void MOTORS12_Config(void) {
 	TIM_BDTRInitStructure.TIM_Break = TIM_Break_Disable;
 	TIM_BDTRConfig(TIM1, &TIM_BDTRInitStructure);
  
-	// enable motor timer
-	TIM_Cmd(TIM1, ENABLE);
-	// enable motor timer main output (the bridge signals)
-	TIM_CtrlPWMOutputs(TIM1, ENABLE);
-}
+	// preload ARR register
+	TIM_CCPreloadControl(TIM1, ENABLE);
 
-void MOTORS1234_Config(void) { 					
-	//Configuration Structures
-	GPIO_InitTypeDef		GPIO_InitStructure;
-	TIM_TimeBaseInitTypeDef	TIM_TimeBaseStructure;
-	TIM_OCInitTypeDef		TIM_OCInitStructure;
-	TIM_BDTRInitTypeDef		TIM_BDTRInitStructure;
+	// activate COM (Commutation) Event from Slave (HallSensor timer)
+	// through TRGI
+	TIM_SelectCOM(TIM1, ENABLE);
 
-	// TIM1 clock enable
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);  				  
-	// AFIO Clock Enable
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-	// GPIO clocks enable
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOE, ENABLE);
-		
-	// TIM1 Full Pin Remap
-	GPIO_PinRemapConfig(GPIO_FullRemap_TIM1, ENABLE);
+  // Internal connection from Hall/Enc Timer to Motor Timer
+  // eg. TIM1 (BLDC Motor Timer) is Slave of TIM3 (Hall Timer)
+  // Internal connection from Hall/Enc Timer to Motor Timer
 
-	/*	PORT B Push-Pull 10MHz Outputs:	*\
-		PB.0	M1B						
-		PB.1	M1A						
-		PB.2	M2B						*/
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
+  // Choose carefully from the following possible combination
+  // check programmers reference manual
+  // TIM_SelectInputTrigger(TIM1, TIM_TS_ITR0);
+  // MotorTimer = TIM1, HallTimer = TIM5
+  // TIM_SelectInputTrigger(TIM1, TIM_TS_ITR1);
+  // MotorTimer = TIM1, HallTimer = TIM2
 
-	/*	PORT E Push-Pull 10MHz Outputs:	*\
-		PE.7	M2A						
-		PE.9	M3B						
-		PE.10	M3A						
-		PE.13	M4B						
-		PE.15	M4A						*/
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_13 | GPIO_Pin_15;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_Init(GPIOE, &GPIO_InitStructure);
-	
-	/*	PORT E Push-Pull 10MHz AF Out:	*\
-		PE.8	M1EN						
-		PE.11	M2EN					
-		PE.12	M3EN					
-		PE.14	M4EN					*/
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_11 | GPIO_Pin_12 | GPIO_Pin_14;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_Init(GPIOE, &GPIO_InitStructure);
+	//TIM_SelectInputTrigger(TIM1, TIM_TS_ITR2);
+	// MotorTimer = TIM1, HallTimer = TIM3
+
+	TIM_SelectInputTrigger(TIM1, TIM_TS_ITR3);
+	// MotorTimer = TIM1, HallTimer = TIM4
+
+  // TIM_SelectInputTrigger(TIM8, TIM_TS_ITR0);
+  // MotorTimer = TIM8, HallTimer = TIM1
+  // TIM_SelectInputTrigger(TIM8, TIM_TS_ITR1);
+  // MotorTimer = TIM8, HallTimer = TIM2
+  // TIM_SelectInputTrigger(TIM8, TIM_TS_ITR2);
+  // MotorTimer = TIM8, HallTimer = TIM4
+  // TIM_SelectInputTrigger(TIM8, TIM_TS_ITR3);
+  // MotorTimer = TIM8, HallTimer = TIM5
  
-	// Time Base configuration
-	TIM_TimeBaseStructure.TIM_Prescaler = 3;
-	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseStructure.TIM_Period = TIM1PERIOD;		// 72MHz / 3 / (TIM1PERIOD==1000) = 24kHz
-	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
-	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
+//	// Enable interrupt, motor commutation has high piority and has
+//	// a higher subpriority then the hall sensor
+//	NVIC_InitStructure.NVIC_IRQChannel = TIM1_TRG_COM_IRQn;
+//	// highest priority
+//	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
+//	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+//	// highest priority
+//	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+//	NVIC_Init(&NVIC_InitStructure);
  
-	// TIM1_CH1N: M1EN
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Disable;
-	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
-	TIM_OCInitStructure.TIM_Pulse = TIM1PERIOD;
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
-	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
-	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
-	TIM_OC1Init(TIM1, &TIM_OCInitStructure);
-																
-	// TIM1_CH2: M2EN
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Disable;
-	TIM_OCInitStructure.TIM_Pulse = 0;
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
-	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
-	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
-	TIM_OC2Init(TIM1, &TIM_OCInitStructure);
+  // Interrupt for hardwired EmergencyStop (if needed)
+  // Timer 1 Motor Emergency Break Input
+  // NVIC_InitStructure.NVIC_IRQChannel = TIM1_BRK_IRQn;
+  // NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
+  // NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+  // NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  // NVIC_Init(&NVIC_InitStructure);
  
-	// TIM1_CH1N: M3EN
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Disable;
-	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
-	TIM_OCInitStructure.TIM_Pulse = TIM1PERIOD;
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
-	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
-	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
-	TIM_OC3Init(TIM1, &TIM_OCInitStructure);
-																
-	// TIM1_CH4: M2EN
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Disable;
-	TIM_OCInitStructure.TIM_Pulse = 0;
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
-	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
-	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
-	TIM_OC4Init(TIM1, &TIM_OCInitStructure);
+  // --------- activate the bldc bridge ctrl. ----------
+  // in a project this will be done late after complete
+  // configuration of other peripherie
  
-	/* automatic output enable, break off, dead time ca. 200ns and  
-	// no lock of configuration */
-	TIM_BDTRInitStructure.TIM_OSSRState = TIM_OSSRState_Enable;
-	TIM_BDTRInitStructure.TIM_OSSIState = TIM_OSSIState_Enable;
-	TIM_BDTRInitStructure.TIM_LOCKLevel = TIM_LOCKLevel_OFF;
-	// DeadTime[ns] = value * (1/SystemCoreFreq) (on 72MHz: 7 is 98ns, on 24MHz: 7 is 296ns)
-	TIM_BDTRInitStructure.TIM_DeadTime = 0;
-	TIM_BDTRInitStructure.TIM_AutomaticOutput = TIM_AutomaticOutput_Enable;
-	 
-	// enable this if you use emergency stop signal
-	// TIM_BDTRInitStructure.TIM_Break = TIM_Break_Enable;
-	// TIM_BDTRInitStructure.TIM_BreakPolarity = MOTOR_TMC603_EMSTOP_POLARITY; 
-	TIM_BDTRInitStructure.TIM_Break = TIM_Break_Disable;
-	TIM_BDTRConfig(TIM1, &TIM_BDTRInitStructure);
+//	// enable COM (commutation) IRQ
+//	TIM_ITConfig(TIM1, TIM_IT_COM, ENABLE);
  
 	// enable motor timer
 	TIM_Cmd(TIM1, ENABLE);
+
 	// enable motor timer main output (the bridge signals)
 	TIM_CtrlPWMOutputs(TIM1, ENABLE);
+
+	// Data structures init
+	Motor.setPWM = 0;
+	Motor.setSpeed = 0;
+	Motor.setPosition = 0;
+	Motor.setCurrent = 0;
 }
  
-void MOTOR1_SetInput(s16 input){	
-	if(input > MAX_PWM)
-		input = MAX_PWM;
-	else if(input < -MAX_PWM)
-		input = -MAX_PWM;
-
-	if(input == 0){		
-		GPIO_ResetBits(MOTOR1A_GPIO, MOTOR1A_PIN);
-		GPIO_ResetBits(MOTOR1B_GPIO, MOTOR1B_PIN);
-		//TIM1->CCR1 = TIM1PERIOD - 0;
-	}	   
-	else if(input > 0){
-		GPIO_SetBits(MOTOR1A_GPIO, MOTOR1A_PIN);
-		GPIO_ResetBits(MOTOR1B_GPIO, MOTOR1B_PIN);
-		//TIM1->CCR1 = TIM1PERIOD - input;
-		TIM1->CCR1 = input;
-	}
-	else{
-		GPIO_ResetBits(MOTOR1A_GPIO, MOTOR1A_PIN);
-		GPIO_SetBits(MOTOR1B_GPIO, MOTOR1B_PIN);
-		//TIM1->CCR1 = TIM1PERIOD + input;
-		TIM1->CCR1 = -input;
-	}
+// enable the connection between HallTimer and MotorTimer
+void enableHallCommutateSignal() {
+   TIM_SelectCOM(TIM1, ENABLE);
 }
  
-void MOTOR2_SetInput(s16 input){	
-	if(input > MAX_PWM)
-		input = MAX_PWM;
-	else if(input < -MAX_PWM)
-		input = -MAX_PWM;
-
-	if(input == 0){		
-		GPIO_ResetBits(MOTOR2A_GPIO, MOTOR2A_PIN);
-		GPIO_ResetBits(MOTOR2B_GPIO, MOTOR2B_PIN);
-		//TIM1->CCR2 = 0;
-	}	   
-	else if(input > 0){
-		GPIO_SetBits(MOTOR2A_GPIO, MOTOR2A_PIN);
-		GPIO_ResetBits(MOTOR2B_GPIO, MOTOR2B_PIN);
-		TIM1->CCR2 = input;
-	}
-	else{
-		GPIO_ResetBits(MOTOR2A_GPIO, MOTOR2A_PIN);
-		GPIO_SetBits(MOTOR2B_GPIO, MOTOR2B_PIN);
-		TIM1->CCR2 = -input;
-	}
+// disable the connection between HallTimer and MotorTimer
+void disableHallCommutateSignal() {
+   TIM_SelectCOM(TIM1, DISABLE);
 }
  
-void MOTOR3_SetInput(s16 input){	
-	if(input > MAX_PWM)
-		input = MAX_PWM;
-	else if(input < -MAX_PWM)
-		input = -MAX_PWM;
-
-	if(input == 0){		
-		GPIO_ResetBits(MOTOR3A_GPIO, MOTOR3A_PIN);
-		GPIO_ResetBits(MOTOR3B_GPIO, MOTOR3B_PIN);
-		//TIM1->CCR3 = TIM1PERIOD - 0;
-	}	   
-	else if(input > 0){
-		GPIO_SetBits(MOTOR3A_GPIO, MOTOR3A_PIN);
-		GPIO_ResetBits(MOTOR3B_GPIO, MOTOR3B_PIN);
-		//TIM1->CCR3 = TIM1PERIOD - input;
-		TIM1->CCR3 = input;
-	}
-	else{
-		GPIO_ResetBits(MOTOR3A_GPIO, MOTOR3A_PIN);
-		GPIO_SetBits(MOTOR3B_GPIO, MOTOR3B_PIN);
-		//TIM1->CCR3 = TIM1PERIOD + input;
-		TIM1->CCR3 = -input;
-	}
+// This function handles motor timer trigger and commutation interrupts
+// can be used for calculation...
+void TIM1_TRG_COM_IRQHandler(void)
+{
+  TIM_ClearITPendingBit(TIM1, TIM_IT_COM);
+  // commutationCount++;
 }
  
-void MOTOR4_SetInput(s16 input){	
-	if(input > MAX_PWM)
-		input = MAX_PWM;
-	else if(input < -MAX_PWM)
-		input = -MAX_PWM;
+/* This is called from HALL timer interrupt handler
+   remember:
+     if hall a hall edge is detected
+     first the motor commutation event is done
+     next this routine is called which has to prepare the next motor step
+     (which FET must be switched on or off)
+   active freewhelling is used to minimize power loss */
 
-	if(input == 0){		
-		GPIO_ResetBits(MOTOR4A_GPIO, MOTOR4A_PIN);
-		GPIO_ResetBits(MOTOR4B_GPIO, MOTOR4B_PIN);
-		//TIM1->CCR4 = 0;
-	}	   
-	else if(input > 0){
-		GPIO_SetBits(MOTOR4A_GPIO, MOTOR4A_PIN);
-		GPIO_ResetBits(MOTOR4B_GPIO, MOTOR4B_PIN);
-		TIM1->CCR4 = input;								  
+void BLDCMotorPrepareCommutation(void)
+{
+	vu8			hallpos;
+	vu8			BH1, BL1, BH2, BL2, BH3, BL3;
+	const u8 	(*bldcBridgeState)[6];
+	vs16 		pwm;
+
+	hallpos = HALL_Pattern();
+
+	if(Motor.setPWM == 0){
+		bldcBridgeState = BLDC_BRIDGE_STATE_STILL;
+		pwm = 0;
+	}
+	else if(Motor.setPWM > 0){
+		bldcBridgeState = BLDC_BRIDGE_STATE_FORWARD;
+		pwm = Motor.setPWM;
 	}
 	else{
-		GPIO_ResetBits(MOTOR4A_GPIO, MOTOR4A_PIN);
-		GPIO_SetBits(MOTOR4B_GPIO, MOTOR4B_PIN);
-		TIM1->CCR4 = -input;
-	}
-}
-
-s16 ENC1_ReadIncrement(void){
-	return 0;
-}
-
-s16 ENC2_ReadIncrement(void){
-	return 0;
-}
-
-void MOTORS_Proc_old(void) {
-	int16_t pwm1, pwm2, temp_posErr;
-
-	if(Motor[0].mode == NF_DrivesMode_PWM) {
-		Motor[0].setSpeed = NFComBuf.SetDrivesPWM.data[0];
-	}
-	else if(NF_DrivesMode_POSITION) {
-		temp_posErr = ADC.milivolt[0] - NFComBuf.SetDrivesPosition.data[0];
-		Motor[0].setSpeed = temp_posErr;
-	}
-	else {
-		Motor[0].setSpeed = 0;
-	}
-    
-    // #### Motor1 PID input data preparation
-	if((Motor[0].setSpeed == 0) && (Motor[0].speed == 0))
-	{
-	//	PID[0].referenceValue = 0;
-	//	PID[0].measurementValue = 0;
-        if(PID[0].sumError > 0)
-            PID[0].sumError --;
-        else if(PID[0].sumError < 0)
-            PID[0].sumError ++;
-        if(PID[0].lastProcessValue > 0)
-            PID[0].lastProcessValue --;
-        else if(PID[0].lastProcessValue < 0)
-            PID[0].lastProcessValue ++;
+		bldcBridgeState = BLDC_BRIDGE_STATE_REVERSE;
+		pwm = - Motor.setPWM;
 	}
 
-    PID[0].referenceValue =  Motor[0].setSpeed;
-    PID[0].measurementValue = Motor[0].speed;
+	// this is only for motor direction forward
 
-	// #### Motor2 PID input data preparation
-	if(Motor[1].setSpeed == 0 && Motor[1].speed == 0)
-	{
-	//	PID[1].referenceValue = 0;
-	//	PID[1].measurementValue = 0;
-        if(PID[1].sumError > 0)
-            PID[1].sumError --;
-        else if(PID[1].sumError < 0)
-            PID[1].sumError ++;
-        if(PID[1].lastProcessValue > 0)
-            PID[1].lastProcessValue --;
-        else if(PID[1].lastProcessValue < 0)
-            PID[1].lastProcessValue ++;
-	}
-	PID[1].referenceValue =  Motor[1].setSpeed;
-	PID[1].measurementValue = Motor[1].speed;
+	BH1 = bldcBridgeState[hallpos][0];
+	BL1 = bldcBridgeState[hallpos][1];
 
-	// #### do PID 
-	PID[0].inputValue = PID_Controller(&PID[0]);
-	PID[1].inputValue = PID_Controller(&PID[1]);
+	BH2 = bldcBridgeState[hallpos][2];
+	BL2 = bldcBridgeState[hallpos][3];
 
-	// #### Motor1 set input
-	if(PID[0].inputValue < -190)
-		pwm1 = -190;
-	else if(PID[0].inputValue > 190)
-		pwm1 = 190;
-	else
-		pwm1 = PID[0].inputValue;
-    PID[0].lastProcessValue = PID[0].inputValue;
-	
-    MOTOR1_SetInput(5 * pwm1);	// MOTORx_SetInput: -1000 <= inputValue <= 1000
+	BH3 = bldcBridgeState[hallpos][4];
+	BL3 = bldcBridgeState[hallpos][5];
 
-	// #### Motor2 set input
-	if(PID[1].inputValue < -190)
-		pwm2 = -190;
-	else if(PID[1].inputValue > 190)
-		pwm2 = 190;
-	else
-		pwm2 = PID[1].inputValue;
-    
-    PID[1].lastProcessValue = PID[1].inputValue;
 
-    MOTOR2_SetInput(5 * pwm2);	// MOTORx_SetInput: -1000 <= inputValue <= 1000
-
-}
-
-void MOTORS_Proc(void) {
-	uint8_t i;
-	int16_t pwmToBeSet[4];
-
-	for(i=0; i<3; i++) {
-		// Set desired position to current position value in case of switch to Position Mode
-		if(Motor[i].mode != NF_DrivesMode_POSITION){
-			NFComBuf.SetDrivesPosition.data[i] = ADC.milivolt[i];
-		}
-
-		// Mode PWM
-		if(Motor[i].mode == NF_DrivesMode_PWM) {
-			pwmToBeSet[i] = NFComBuf.SetDrivesPWM.data[i];
-		}			 
-		// Mode POSITION
-		else if(Motor[i].mode == NF_DrivesMode_POSITION) {
-			// Limit Position value
-			if(NFComBuf.SetDrivesPosition.data[i] < NFComBuf.SetDrivesMinPosition.data[i])
-				Motor[i].setPosition = NFComBuf.SetDrivesMinPosition.data[i];
-			else if(NFComBuf.SetDrivesPosition.data[i] > NFComBuf.SetDrivesMaxPosition.data[i])
-				Motor[i].setPosition = NFComBuf.SetDrivesMaxPosition.data[i];
-			else 
-				Motor[i].setPosition = NFComBuf.SetDrivesPosition.data[i];
-
-			// #### PID input data preparation
-			PID[i].referenceValue	= Motor[i].setPosition;
-	    	PID[i].measurementValue	= ADC.milivolt[i];
-	
-			// #### do PID 
-			PID[i].inputValue = PID_Controller(&PID[i]);
-	
-			// #### Motor1 set input
-			if(PID[i].inputValue < -200)
-				pwmToBeSet[i] = -200;
-			else if(PID[i].inputValue > 200)
-				pwmToBeSet[i] = 200;
-			else
-				pwmToBeSet[i] = PID[i].inputValue;
-		    PID[i].lastProcessValue = pwmToBeSet[i];
-
-			// Do some magic to limit integrated error
-			if(PID[i].sumError > 200)
-				PID[i].sumError = 200;
-			else if(PID[i].sumError < -200)
-				PID[i].sumError = -200;
-			// And magic continues to make PWM fade out as much as possible			
-	        if(PID[i].sumError > 0)
-	            PID[i].sumError --;
-	        else if(PID[i].sumError < 0)
-	            PID[i].sumError ++;
-	        if(PID[i].lastProcessValue > 0)
-	            PID[i].lastProcessValue --;
-	        else if(PID[i].lastProcessValue < 0)
-	            PID[i].lastProcessValue ++;
-			
-		    pwmToBeSet[i] = 5 * pwmToBeSet[i];	// MOTORx_SetInput: -1000 <= inputValue <= 1000
-		}
-		// Mode unknown
-		else {
-			pwmToBeSet[i] = 0;
+	// Bridge FETs for Motor Phase U
+	if (BH1) {
+		TIM1->CCR1 = pwm;
+		TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+	} else {
+		TIM1->CCR1 = 0;
+		if (BL1){
+			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+		} else {
+			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
 		}
 	}
 
-	MOTOR1_SetInput(pwmToBeSet[0]);
-	MOTOR2_SetInput(pwmToBeSet[1]);
-	MOTOR3_SetInput(pwmToBeSet[2]);
+	// Bridge FETs for Motor Phase V
+	if (BH2) {
+		TIM1->CCR2 = pwm;
+		TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+	} else {
+		TIM1->CCR2 = 0;
+		if (BL2){
+			TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+		} else {
+			TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
+		}
+	}
+
+	// Bridge FETs for Motor Phase W
+	if (BH3) {
+		TIM1->CCR3 = pwm;
+		TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+	} else {
+		TIM1->CCR3 = 0;
+		if (BL3){
+			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+		} else {
+			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+		}
+	}
 }
 
-void MOTORS_MeasureSpeed(void){
-	static int16_t oldPosition[3], positionBuf[3];
-
-	positionBuf[0] = ADC.milivolt[0];
-	Motor[0].speed = positionBuf[0] - oldPosition[0];
-	oldPosition[0] = positionBuf[0];
+void MOTOR_SetPWM(s16 pwm) {
+	if(pwm > MAX_PWM)
+		pwm = MAX_PWM;
+	else if(pwm < -MAX_PWM)
+		pwm = -MAX_PWM;
+	Motor.setPWM = pwm;
+	BLDCMotorPrepareCommutation();
+	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
 }

@@ -38,9 +38,8 @@ void SysTick_Handler(void)
 	}
 
 	
-	if(STDownCnt[ST_EncSpeed].tick){
-//		MOTORS_MeasureSpeed();
-//		MOTORS_Proc();
-		STDownCnt[ST_EncSpeed].tick = 0;
+	if(STDownCnt[ST_MotorProc].tick){
+		MOTOR_Proc();
+		STDownCnt[ST_MotorProc].tick = 0;
 	}
 }

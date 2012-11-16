@@ -7,6 +7,7 @@
 #include "systick.h"
 #include "interrupts.h"
 #include "motor.h"
+#include "hall.h"
 #include "encoder.h"
 #include "adc.h"
 #include "eeprom.h"
@@ -25,7 +26,7 @@ ADC_St				ADC;
 uint16_t 			serialNumber;
 NF_STRUCT_ComBuf 	NFComBuf;
 PID_St				PID[3];
-MOTOR_St			Motor[1];
+MOTOR_St			Motor;
 
 //##                                      #### ######## ################ PROTOTYPES
 void SystemMonitor(void);
@@ -50,7 +51,8 @@ int main(void)
 //	IN_Config();
 //	OUT_Config();
 //	USART1_Config();
-//	MOTORS1234_Config();
+	HALL_Config();
+	MOTOR_Config();
 	ENCODER1_Config();
 //	PID_LoadDefaults(&PID[0]);
 //	PID_LoadDefaults(&PID[1]);
@@ -58,6 +60,7 @@ int main(void)
 //	ADCwithDMA_Config();
 	NVIC_Configuration();
 	USB_Config();
+	crcInit();
 //	PID_Init(&PID[0]);
 //	PID_Init(&PID[1]);
 //	PID_Init(&PID[2]);
@@ -71,6 +74,10 @@ int main(void)
 			LED_symMINUS,	//newState
 			LED_DP);		//blink
 
+
+	Motor.setPWM = 500;
+	BLDCMotorPrepareCommutation();
+	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
 
 	//#### MAIN LOOP ####//
 	while (1){
@@ -95,7 +102,7 @@ int main(void)
 			STDownCnt[ST_StatusLed].tick = 0;
 			LED_Proc();
 			if(bDeviceState == CONFIGURED){
-				usbBytesToSend1 = my_itoa(ENCODER1_Position(), USBBufs1.txBuf, 10);
+				usbBytesToSend1 = my_itoa(HALL_Pattern(), USBBufs1.txBuf, 10);
 				USB_SendNBytes(USBBufs1.txBuf, usbBytesToSend1);
 				USB_SendNBytes("\r\n", 2);
 			}
@@ -116,7 +123,7 @@ int main(void)
 				NFComBuf.SetDigitalOutputs.updated = 0;
 			}
 			if(NFComBuf.SetDrivesMode.updated){
-				Motor[0].mode = NFComBuf.SetDrivesMode.data[0];
+				Motor.mode = NFComBuf.SetDrivesMode.data[0];
 				NFComBuf.SetDrivesMode.updated = 0;
 			}
 			if(NFComBuf.SetDrivesPWM.updated){

@@ -26,23 +26,19 @@
 
 typedef struct{
 	uint8_t mode;
+	int16_t setPWM;
+	int16_t setCurrent;
 	int16_t setSpeed;
-	int16_t setPosition;
-	uint8_t dir;
+	int32_t setPosition;
 	int16_t speed;
+	int32_t position;
 } MOTOR_St;
 
 //##                                      #### ######## ################ PROTOTYPES:
 
-void MOTORS12_Config(void);
-void MOTORS1234_Config(void);
-void MOTOR1_SetInput(s16 input);
-void MOTOR2_SetInput(s16 input);
-void MOTOR3_SetInput(s16 input);
-void MOTOR4_SetInput(s16 input);
-s16 ENC1_ReadIncrement(void);
-s16 ENC2_ReadIncrement(void);
-void MOTORS_Proc(void);
-void MOTORS_MeasureSpeed(void);
+void MOTOR_Config(void);
+void MOTOR_SetPWM(s16 input);
+void MOTOR_Proc(void);
+void MOTOR_MeasureSpeed(void);
 
 #endif	// ifndef _MOTOR_H_

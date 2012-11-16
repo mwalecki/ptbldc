@@ -111,15 +111,9 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 		_PRINT_INT_RESPONSE(NFComBuf.ReadAnalogInputs.data[8])
 
 	else
-	_GROUP(":MOT1") 
+	_GROUP(":PWM")
 		_GET_SET_MEMBER(NFComBuf.SetDrivesPWM.data[0], "")
-		MOTOR1_SetInput(NFComBuf.SetDrivesPWM.data[0]);
-	_ENDGROUP
-
-	else
-	_GROUP(":MOT2") 
-		_GET_SET_MEMBER(NFComBuf.SetDrivesPWM.data[1], "")
-		MOTOR2_SetInput(NFComBuf.SetDrivesPWM.data[1]);
+		MOTOR_SetPWM(NFComBuf.SetDrivesPWM.data[0]);
 	_ENDGROUP
 
 	else
@@ -130,30 +124,6 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 		_END_GET_SETANDDO_MEMBER
 		else
 		_GET_SETANDDO_MEMBER(NFComBuf.SetDrivesMaxPosition.data[0], ":MAX")
-			NFComBuf.SetDrivesMaxPosition.updated = 1;
-			NFComBuf.dataReceived = 1;
-		_END_GET_SETANDDO_MEMBER
-	_ENDGROUP
-	else
-	_GROUP(":DRV2")
-		_GET_SETANDDO_MEMBER(NFComBuf.SetDrivesMinPosition.data[1], ":MIN")
-			NFComBuf.SetDrivesMinPosition.updated = 1;
-			NFComBuf.dataReceived = 1;
-		_END_GET_SETANDDO_MEMBER
-		else
-		_GET_SETANDDO_MEMBER(NFComBuf.SetDrivesMaxPosition.data[1], ":MAX")
-			NFComBuf.SetDrivesMaxPosition.updated = 1;
-			NFComBuf.dataReceived = 1;
-		_END_GET_SETANDDO_MEMBER
-	_ENDGROUP
-	else
-	_GROUP(":DRV3")
-		_GET_SETANDDO_MEMBER(NFComBuf.SetDrivesMinPosition.data[2], ":MIN")
-			NFComBuf.SetDrivesMinPosition.updated = 1;
-			NFComBuf.dataReceived = 1;
-		_END_GET_SETANDDO_MEMBER
-		else
-		_GET_SETANDDO_MEMBER(NFComBuf.SetDrivesMaxPosition.data[2], ":MAX")
 			NFComBuf.SetDrivesMaxPosition.updated = 1;
 			NFComBuf.dataReceived = 1;
 		_END_GET_SETANDDO_MEMBER
@@ -176,50 +146,16 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 			NFComBuf.dataReceived = 1;
 		_END_GET_SETANDDO_MEMBER 
 	_ENDGROUP
-	else
-	_GROUP(":PID2")
-		_GET_SETANDDO_MEMBER(NFComBuf.SetPositionRegulator.data[1].p, ":P")
-			NFComBuf.SetPositionRegulator.updated = 1;
-			NFComBuf.dataReceived = 1;
-		_END_GET_SETANDDO_MEMBER 
-		else
-		_GET_SETANDDO_MEMBER(NFComBuf.SetPositionRegulator.data[1].i, ":I")
-			NFComBuf.SetPositionRegulator.updated = 1;
-			NFComBuf.dataReceived = 1;
-		_END_GET_SETANDDO_MEMBER 
-		else
-		_GET_SETANDDO_MEMBER(NFComBuf.SetPositionRegulator.data[1].d, ":D")
-			NFComBuf.SetPositionRegulator.updated = 1;
-			NFComBuf.dataReceived = 1;
-		_END_GET_SETANDDO_MEMBER 
-	_ENDGROUP
-	else
-	_GROUP(":PID3")
-		_GET_SETANDDO_MEMBER(NFComBuf.SetPositionRegulator.data[2].p, ":P")
-			NFComBuf.SetPositionRegulator.updated = 1;
-			NFComBuf.dataReceived = 1;
-		_END_GET_SETANDDO_MEMBER 
-		else
-		_GET_SETANDDO_MEMBER(NFComBuf.SetPositionRegulator.data[2].i, ":I")
-			NFComBuf.SetPositionRegulator.updated = 1;
-			NFComBuf.dataReceived = 1;
-		_END_GET_SETANDDO_MEMBER 
-		else
-		_GET_SETANDDO_MEMBER(NFComBuf.SetPositionRegulator.data[2].d, ":D")
-			NFComBuf.SetPositionRegulator.updated = 1;
-			NFComBuf.dataReceived = 1;
-		_END_GET_SETANDDO_MEMBER 
-	_ENDGROUP
 	
 
 
 	else
 	_IF_MEMBER_THEN(":ENC1?")
-		_PRINT_INT_RESPONSE(ENC1_ReadIncrement())
+		_PRINT_INT_RESPONSE(ENCODER1_Position())
 
-	else
-	_IF_MEMBER_THEN(":ENC2?")
-		_PRINT_INT_RESPONSE(ENC2_ReadIncrement())
+//	else
+//	_IF_MEMBER_THEN(":ENC2?")
+//		_PRINT_INT_RESPONSE(ENCODER2_Position())
 										 
 	else
 	_IF_MEMBER_THEN(":SER!")

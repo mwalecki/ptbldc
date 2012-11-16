@@ -7,8 +7,8 @@
 #define ST_Period0			5000 // all values in [ *0.1ms]
 #define ST_MotorsPid	1
 #define ST_Period1			10
-#define ST_EncSpeed		2
-#define ST_Period2			100
+#define ST_MotorProc	2
+#define ST_Period2			10
 #define ST_UsartCmdWD	3
 #define ST_Period3			5000
 #define ST_UsartTxDelay	4
