@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-#define ADC_Channels 12
+#define ADC_Channels 9
 #define ADC_DigitalBytes ((ADC_Channels-1)/8 + 1)
 
 typedef struct{

@@ -23,14 +23,6 @@ void eebackup_Recover(void)
 		(((uint32_t)EEPROM_Read(EEADDR_DRV1_MIN_H)) << 16 ) | EEPROM_Read(EEADDR_DRV1_MIN_L);
 	NFComBuf.SetDrivesMaxPosition.data[0] = 
 		(((uint32_t)EEPROM_Read(EEADDR_DRV1_MAX_H)) << 16 ) | EEPROM_Read(EEADDR_DRV1_MAX_L);
-	NFComBuf.SetDrivesMinPosition.data[1] = 
-		(((uint32_t)EEPROM_Read(EEADDR_DRV2_MIN_H)) << 16 ) | EEPROM_Read(EEADDR_DRV2_MIN_L);
-	NFComBuf.SetDrivesMaxPosition.data[1] = 
-		(((uint32_t)EEPROM_Read(EEADDR_DRV2_MAX_H)) << 16 ) | EEPROM_Read(EEADDR_DRV2_MAX_L);
-	NFComBuf.SetDrivesMinPosition.data[2] = 
-		(((uint32_t)EEPROM_Read(EEADDR_DRV3_MIN_H)) << 16 ) | EEPROM_Read(EEADDR_DRV3_MIN_L);
-	NFComBuf.SetDrivesMaxPosition.data[2] = 
-		(((uint32_t)EEPROM_Read(EEADDR_DRV3_MAX_H)) << 16 ) | EEPROM_Read(EEADDR_DRV3_MAX_L);
 	
 	serialNumber = EEPROM_Read(EEADDR_SERIAL);
 }
@@ -51,14 +43,6 @@ void eebackup_SaveAll(void)
 	EEPROM_Write(EEADDR_DRV1_MIN_H, (u16) ((NFComBuf.SetDrivesMinPosition.data[0] >> 16) & 0x0000ffff));
 	EEPROM_Write(EEADDR_DRV1_MAX_L, (u16) (NFComBuf.SetDrivesMaxPosition.data[0] & 0x0000ffff));
 	EEPROM_Write(EEADDR_DRV1_MAX_H, (u16) ((NFComBuf.SetDrivesMaxPosition.data[0] >> 16) & 0x0000ffff));
-	EEPROM_Write(EEADDR_DRV2_MIN_L, (u16) (NFComBuf.SetDrivesMinPosition.data[1] & 0x0000ffff));
-	EEPROM_Write(EEADDR_DRV2_MIN_H, (u16) ((NFComBuf.SetDrivesMinPosition.data[1] >> 16) & 0x0000ffff));
-	EEPROM_Write(EEADDR_DRV2_MAX_L, (u16) (NFComBuf.SetDrivesMaxPosition.data[1] & 0x0000ffff));
-	EEPROM_Write(EEADDR_DRV2_MAX_H, (u16) ((NFComBuf.SetDrivesMaxPosition.data[1] >> 16) & 0x0000ffff));
-	EEPROM_Write(EEADDR_DRV3_MIN_L, (u16) (NFComBuf.SetDrivesMinPosition.data[2] & 0x0000ffff));
-	EEPROM_Write(EEADDR_DRV3_MIN_H, (u16) ((NFComBuf.SetDrivesMinPosition.data[2] >> 16) & 0x0000ffff));
-	EEPROM_Write(EEADDR_DRV3_MAX_L, (u16) (NFComBuf.SetDrivesMaxPosition.data[2] & 0x0000ffff));
-	EEPROM_Write(EEADDR_DRV3_MAX_H, (u16) ((NFComBuf.SetDrivesMaxPosition.data[2] >> 16) & 0x0000ffff));
 }
 
 void eebackup_SaveInitialValues(void)

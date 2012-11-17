@@ -57,7 +57,7 @@ int main(void)
 //	PID_LoadDefaults(&PID[0]);
 //	PID_LoadDefaults(&PID[1]);
 //	PID_LoadDefaults(&PID[2]);
-//	ADCwithDMA_Config();
+	ADCwithDMA_Config();
 	NVIC_Configuration();
 	USB_Config();
 	crcInit();
@@ -81,7 +81,7 @@ int main(void)
 
 	//#### MAIN LOOP ####//
 	while (1){
-		commCnt = 0;
+//		commCnt = 0;
 
 		if(STDownCnt[ST_UsartTxDelay].tick){
 			if(Usart1.txDataReady){

@@ -1,6 +1,9 @@
 #include "motor.h"
+#include "encoder.h"
+#include "nfv2.h"
 
-extern MOTOR_St		Motor;
+extern MOTOR_St				Motor;
+extern NF_STRUCT_ComBuf 	NFComBuf;
 
 void MOTOR_Proc(void) {
 	static int32_t prevPosition = 0;
@@ -9,7 +12,7 @@ void MOTOR_Proc(void) {
 	Motor.speed = Motor.position - prevPosition;
 	prevPosition = Motor.position;
 
-
+	NFComBuf.ReadDrivesPosition.data[0] = Motor.position;
 }
 
 // BLDC motor steps

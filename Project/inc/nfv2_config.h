@@ -48,7 +48,7 @@
 											
 	#define NF_BUFSZ_SetDigitalOutputs		1
 	#define NF_BUFSZ_ReadDigitalInputs		1
-	#define NF_BUFSZ_ReadAnalogInputs		2
+	#define NF_BUFSZ_ReadAnalogInputs		9
 	
 //	#define NF_BUFSZ_ReadDistance			8  
 	

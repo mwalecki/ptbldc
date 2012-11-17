@@ -81,33 +81,30 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 		
 	else
 	_IF_MEMBER_THEN(":AIN0?")
-		_PRINT_INT_RESPONSE(NFComBuf.ReadAnalogInputs.data[9])
-	else
-	_IF_MEMBER_THEN(":AIN1?")
 		_PRINT_INT_RESPONSE(NFComBuf.ReadAnalogInputs.data[0])
 	else
-	_IF_MEMBER_THEN(":AIN2?")
+	_IF_MEMBER_THEN(":AIN1?")
 		_PRINT_INT_RESPONSE(NFComBuf.ReadAnalogInputs.data[1])
 	else
-	_IF_MEMBER_THEN(":AIN3?")
+	_IF_MEMBER_THEN(":AIN2?")
 		_PRINT_INT_RESPONSE(NFComBuf.ReadAnalogInputs.data[2])
 	else
-	_IF_MEMBER_THEN(":AIN4?")
+	_IF_MEMBER_THEN(":AIN3?")
 		_PRINT_INT_RESPONSE(NFComBuf.ReadAnalogInputs.data[3])
 	else
-	_IF_MEMBER_THEN(":AIN5?")
+	_IF_MEMBER_THEN(":AIN4?")
 		_PRINT_INT_RESPONSE(NFComBuf.ReadAnalogInputs.data[4])
 	else
-	_IF_MEMBER_THEN(":AIN6?")
+	_IF_MEMBER_THEN(":AIN5?")
 		_PRINT_INT_RESPONSE(NFComBuf.ReadAnalogInputs.data[5])
 	else
-	_IF_MEMBER_THEN(":AIN7?")
+	_IF_MEMBER_THEN(":AIN6?")
 		_PRINT_INT_RESPONSE(NFComBuf.ReadAnalogInputs.data[6])
 	else
-	_IF_MEMBER_THEN(":AIN8?")
+	_IF_MEMBER_THEN(":AIN7?")
 		_PRINT_INT_RESPONSE(NFComBuf.ReadAnalogInputs.data[7])
 	else
-	_IF_MEMBER_THEN(":AIN9?")
+	_IF_MEMBER_THEN(":AIN8?")
 		_PRINT_INT_RESPONSE(NFComBuf.ReadAnalogInputs.data[8])
 
 	else
