@@ -3,6 +3,8 @@
 						
 #include "common.h"		
 
+#define POSITION_MAX_INCREMENT	20
+
 #define TIM1PERIOD	1000
 #define MAX_PWM		TIM1PERIOD
 
@@ -29,6 +31,7 @@ typedef struct{
 	int16_t setPWM;
 	int16_t setCurrent;
 	int16_t setSpeed;
+	int32_t setTargetPosition;
 	int32_t setPosition;
 	int16_t speed;
 	int32_t position;
@@ -40,5 +43,7 @@ void MOTOR_Config(void);
 void MOTOR_SetPWM(s16 input);
 void MOTOR_Proc(void);
 void MOTOR_MeasureSpeed(void);
+void BLDCMotorPrepareCommutation(void);
+
 
 #endif	// ifndef _MOTOR_H_

@@ -34,7 +34,7 @@ void SystemMonitor(void);
 //##                                      #### ######## ################ MAIN
 int main(void)									  
 {
-	uint8_t usartBytesToSend, usbBytesToSend1, usbBytesToSend2, usbLastByteReceived;
+	uint8_t usbBytesToSend1, usbBytesToSend2, usbLastByteReceived;
 	uint8_t commArray[10];
 	uint8_t commCnt;
 	
@@ -42,8 +42,8 @@ int main(void)
 	RCC_Configuration();	// Init system clock
 	
 	// Init nonvolatile memory and recover saved values of peirpherals data buffers
-//	EEPROM_Init(0);
-//	eebackup_Recover();
+	EEPROM_Init(0);
+	eebackup_Recover();
 
 	// Then init peripherals
 	SYSTICK_Init(STDownCnt);
@@ -61,7 +61,7 @@ int main(void)
 	NVIC_Configuration();
 	USB_Config();
 	crcInit();
-//	PID_Init(&PID[0]);
+	PID_Init(&PID[0]);
 //	PID_Init(&PID[1]);
 //	PID_Init(&PID[2]);
 	
@@ -73,11 +73,6 @@ int main(void)
 	LED_Set(LED_ALL, 		//mask
 			LED_symMINUS,	//newState
 			LED_DP);		//blink
-
-
-	Motor.setPWM = 500;
-	BLDCMotorPrepareCommutation();
-	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
 
 	//#### MAIN LOOP ####//
 	while (1){
@@ -101,11 +96,11 @@ int main(void)
 		if(STDownCnt[ST_StatusLed].tick){	
 			STDownCnt[ST_StatusLed].tick = 0;
 			LED_Proc();
-			if(bDeviceState == CONFIGURED){
-				usbBytesToSend1 = my_itoa(HALL_Pattern(), USBBufs1.txBuf, 10);
-				USB_SendNBytes(USBBufs1.txBuf, usbBytesToSend1);
-				USB_SendNBytes("\r\n", 2);
-			}
+//			if(bDeviceState == CONFIGURED){
+//				usbBytesToSend1 = my_itoa(HALL_Pattern(), (char*)USBBufs1.txBuf, 10);
+//				USB_SendNBytes((uint8_t*)USBBufs1.txBuf, usbBytesToSend1);
+//				USB_SendNBytes((uint8_t*)"\r\n", 2);
+//			}
 		//	USART1_SendString(Usart1.rxBuf);
 		//	USART1_SendString("\r\n\n");
 		//	USART1_SendNBytes("test\r\n", 6);
@@ -153,29 +148,27 @@ int main(void)
 		}
 
 		if(USB_RxBufNotEmpty()) {
-		//	if(MDSET0_isH()) {
-				while(USB_RxBufNotEmpty()){
-					usbLastByteReceived = USB_ReadOneByte();
+			while(USB_RxBufNotEmpty()){
+				usbLastByteReceived = USB_ReadOneByte();
 
-					USBBufs1.rxBuf[USBBufs1.rxPt] = usbLastByteReceived;
-					
-					if(MYSCPI_Interpreter(USBBufs1.rxBuf, &USBBufs1.rxPt, USBBufs1.txBuf, &usbBytesToSend1) > 0){
-						if(usbBytesToSend1 > 0){
-							USB_SendNBytes((uint8_t*)USBBufs1.txBuf, usbBytesToSend1);
-						}
-					}
-				
-					USBBufs2.rxBuf[USBBufs2.rxPt] = usbLastByteReceived;
-					
-					if(NF_Interpreter(&NFComBuf, (uint8_t*)USBBufs2.rxBuf, (uint8_t*)&USBBufs2.rxPt, commArray, &commCnt) > 0){
-						NFComBuf.dataReceived = 1;
-						if(commCnt > 0){
-							usbBytesToSend2 = NF_MakeCommandFrame(&NFComBuf, (uint8_t*)USBBufs2.txBuf, (const uint8_t*)commArray, commCnt, NFComBuf.myAddress);
-							USB_SendNBytes((uint8_t*)USBBufs2.txBuf, usbBytesToSend2);
-						}
+				USBBufs1.rxBuf[USBBufs1.rxPt] = usbLastByteReceived;
+
+				if(MYSCPI_Interpreter(USBBufs1.rxBuf, &USBBufs1.rxPt, USBBufs1.txBuf, &usbBytesToSend1) > 0){
+					if(usbBytesToSend1 > 0){
+						USB_SendNBytes((uint8_t*)USBBufs1.txBuf, usbBytesToSend1);
 					}
 				}
-		//	}
+
+				USBBufs2.rxBuf[USBBufs2.rxPt] = usbLastByteReceived;
+				
+				if(NF_Interpreter(&NFComBuf, (uint8_t*)USBBufs2.rxBuf, (uint8_t*)&USBBufs2.rxPt, commArray, &commCnt) > 0){
+					NFComBuf.dataReceived = 1;
+					if(commCnt > 0){
+						usbBytesToSend2 = NF_MakeCommandFrame(&NFComBuf, (uint8_t*)USBBufs2.txBuf, (const uint8_t*)commArray, commCnt, NFComBuf.myAddress);
+						USB_SendNBytes((uint8_t*)USBBufs2.txBuf, usbBytesToSend2);
+					}
+				}
+			}
 	    }
 	} //####  END main while LOOP ####//
 }

@@ -3,15 +3,15 @@
 
 #include "common.h"		
 #include "led.h"  	
-#include "motor.h"  
+#include "motor.h"
 #include "eeprom.h"
 #include "eebackup.h"
 #include "io.h"
 #include "adc.h"
 #include "nfv2.h"
 
-extern uint16_t 	serialNumber;
-extern SERVO_St		Servo; 
+extern MOTOR_St				Motor;
+extern uint16_t 			serialNumber;
 extern NF_STRUCT_ComBuf 	NFComBuf;
 
 uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, volatile uint8_t *txBuf, volatile uint8_t *txCnt)
@@ -114,7 +114,7 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 	_ENDGROUP
 
 	else
-	_GROUP(":DRV1")
+	_GROUP(":POS")
 		_GET_SETANDDO_MEMBER(NFComBuf.SetDrivesMinPosition.data[0], ":MIN")
 			NFComBuf.SetDrivesMinPosition.updated = 1;
 			NFComBuf.dataReceived = 1;
@@ -124,6 +124,9 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 			NFComBuf.SetDrivesMaxPosition.updated = 1;
 			NFComBuf.dataReceived = 1;
 		_END_GET_SETANDDO_MEMBER
+		else
+		_IF_MEMBER_THEN("?")
+			_PRINT_INT_RESPONSE(Motor.position)
 	_ENDGROUP
 
 	else
@@ -143,22 +146,6 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 			NFComBuf.dataReceived = 1;
 		_END_GET_SETANDDO_MEMBER 
 	_ENDGROUP
-	
-
-
-	else
-	_IF_MEMBER_THEN(":ENC1?")
-		_PRINT_INT_RESPONSE(ENCODER1_Position())
-
-//	else
-//	_IF_MEMBER_THEN(":ENC2?")
-//		_PRINT_INT_RESPONSE(ENCODER2_Position())
-										 
-	else
-	_IF_MEMBER_THEN(":SER!")
-		EEPROM_Write(EEADDR_SERIAL, (u16) serialNumber);
-	else							
-	_GET_SET_MEMBER(serialNumber, ":SER")
 
 	else
 	_GROUP(":MEM") 

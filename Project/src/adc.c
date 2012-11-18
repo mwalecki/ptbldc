@@ -101,7 +101,7 @@ void ADCwithDMA_Config(void){
 	/* Start ADC1 Software Conversion */ 
 	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 
-	ADC.uVoltsPerUnit = 8134;
+	ADC.uVoltsPerUnit = 7975;
 	ADC.unitsOffset = 0;
 	ADC.logicZeroMax_mV = 6000;
 	ADC.logicOneMin_mV = 18000;
