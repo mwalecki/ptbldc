@@ -68,9 +68,10 @@ uint8_t	MDSET2_isH(void);
 uint8_t	MDSET3_isH(void);
 uint8_t	MDSET4_isH(void);
 
-uint8_t IN_HOME_isH(void);
-uint8_t IN_LIM_NEG_isH(void);
-uint8_t IN_LIM_POS_isH(void);
+uint8_t IN_ReadHOME(void);
+uint8_t IN_ReadENABLE(void);
+uint8_t IN_ReadLIMITPOS(void);
+uint8_t IN_ReadLIMITNEG(void);
 
 void OUT_Config(void);
 void IN_Config(void);

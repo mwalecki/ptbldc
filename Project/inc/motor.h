@@ -3,7 +3,8 @@
 						
 #include "common.h"		
 
-#define POSITION_MAX_INCREMENT	20
+#define SYNCHRONIZATION_INCREMENT 	5
+#define POSITION_MAX_INCREMENT		20
 
 #define TIM1PERIOD	1000
 #define MAX_PWM		TIM1PERIOD
@@ -31,12 +32,13 @@ typedef struct{
 	uint8_t previousMode;
 	int16_t setPWM;
 	int16_t setCurrent;
-	int16_t setSpeed;
+	int16_t setIncrement;
 	int32_t setTargetPosition;
 	int32_t setPosition;
 	int16_t currentIncrement;
 	int32_t previousPosition;
 	int32_t currentPosition;
+	uint8_t isSynchronized;
 } MOTOR_St;
 
 //##                                      #### ######## ################ PROTOTYPES:

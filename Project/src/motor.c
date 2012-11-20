@@ -3,6 +3,7 @@
 #include "encoder.h"
 #include "nfv2.h"
 #include "pid.h"
+#include "io.h"
 
 extern MOTOR_St				Motor;
 extern NF_STRUCT_ComBuf 	NFComBuf;
@@ -17,6 +18,9 @@ void MOTOR_Proc(void) {
 	Motor.previousPosition = Motor.currentPosition;
 	Motor.currentPosition = ENCODER1_Position();
 	Motor.currentIncrement = Motor.currentPosition - Motor.previousPosition;
+
+	Motor.previousMode = Motor.mode;
+	Motor.mode = NFComBuf.SetDrivesMode.data[0];
 
 	switch(Motor.mode){
 	case NF_DrivesMode_SYNC_AUTO:
@@ -45,11 +49,29 @@ void MOTOR_Proc(void) {
 }
 
 inline void motorSetSynchronizationSpeed(void) {
-	if()
+	if(Motor.isSynchronized){
+		Motor.setIncrement = 0;
+		return;
+	}
+	if(Motor.previousMode != NF_DrivesMode_SYNC_AUTO){
+		Motor.setIncrement = Motor.currentIncrement;
+	}
+	if(IN_ReadHOME()){
+		if(Motor.setIncrement < SYNCHRONIZATION_INCREMENT)
+			Motor.setIncrement ++;
+		else if(Motor.setIncrement > SYNCHRONIZATION_INCREMENT)
+			Motor.setIncrement --;
+	}
+	else {
+		if(Motor.setIncrement < - SYNCHRONIZATION_INCREMENT)
+			Motor.setIncrement ++;
+		else if(Motor.setIncrement > - SYNCHRONIZATION_INCREMENT)
+			Motor.setIncrement --;
+	}
 }
 
 inline void motorSpeedToPosition(void) {
-
+	Motor.setTargetPosition = Motor.setPosition + Motor.setIncrement;
 }
 
 inline void motorPositionToPWM(void) {
@@ -302,8 +324,9 @@ void MOTOR_Config(void) {
 
 	// Data structures init
 	Motor.setPWM = 0;
-	Motor.setSpeed = 0;
+	Motor.setIncrement = 0;
 	Motor.setPosition = 0;
+	Motor.setTargetPosition = 0;
 	Motor.setCurrent = 0;
 }
  
