@@ -28,16 +28,22 @@
 
 typedef struct{
 	uint8_t mode;
+	uint8_t previousMode;
 	int16_t setPWM;
 	int16_t setCurrent;
 	int16_t setSpeed;
 	int32_t setTargetPosition;
 	int32_t setPosition;
-	int16_t speed;
-	int32_t position;
+	int16_t currentIncrement;
+	int32_t previousPosition;
+	int32_t currentPosition;
 } MOTOR_St;
 
 //##                                      #### ######## ################ PROTOTYPES:
+
+inline void motorSetSynchronizationSpeed(void);
+inline void motorSpeedToPosition(void);
+inline void motorPositionToPWM(void);
 
 void MOTOR_Config(void);
 void MOTOR_SetPWM(s16 input);

@@ -48,7 +48,7 @@ int main(void)
 	// Then init peripherals
 	SYSTICK_Init(STDownCnt);
 	LED_Config();
-//	IN_Config();
+	IN_Config();
 //	OUT_Config();
 //	USART1_Config();
 	HALL_Config();

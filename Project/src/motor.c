@@ -8,66 +8,28 @@ extern MOTOR_St				Motor;
 extern NF_STRUCT_ComBuf 	NFComBuf;
 extern PID_St				PID[];
 
-void MOTOR_Proc(void) {
-	static int32_t prevPosition = 0;
-	static int32_t setStepPosition = 0;
 
-	Motor.position = ENCODER1_Position();
-	Motor.speed = Motor.position - prevPosition;
-	prevPosition = Motor.position;
+//##                                      #### ######## ################ PRIVATE GLOBALS
+static int32_t setStepPosition = 0;
+
+void MOTOR_Proc(void) {
+
+	Motor.previousPosition = Motor.currentPosition;
+	Motor.currentPosition = ENCODER1_Position();
+	Motor.currentIncrement = Motor.currentPosition - Motor.previousPosition;
 
 	switch(Motor.mode){
-	case NF_DrivesMode_PWM:
-		Motor.setPWM = NFComBuf.SetDrivesPWM.data[0];
+	case NF_DrivesMode_SYNC_AUTO:
+		motorSetSynchronizationSpeed();
+		motorSpeedToPosition();
+		motorPositionToPWM();
 		break;
 	case NF_DrivesMode_POSITION:
-		// Limit speed value
-		if(NFComBuf.SetDrivesPosition.data[0] < NFComBuf.SetDrivesMinPosition.data[0])
-			Motor.setPosition = NFComBuf.SetDrivesMinPosition.data[0];
-		else if(NFComBuf.SetDrivesPosition.data[0] > NFComBuf.SetDrivesMaxPosition.data[0])
-			Motor.setPosition = NFComBuf.SetDrivesMaxPosition.data[0];
-		else
-			Motor.setPosition = NFComBuf.SetDrivesPosition.data[0];
-
-		if(Motor.setPosition > setStepPosition + POSITION_MAX_INCREMENT)
-			setStepPosition += POSITION_MAX_INCREMENT;
-		else if(Motor.setPosition < setStepPosition - POSITION_MAX_INCREMENT)
-			setStepPosition -= POSITION_MAX_INCREMENT;
-		else
-			setStepPosition = Motor.setPosition;
-
-		// #### PID input data preparation
-		PID[0].referenceValue	= setStepPosition;
-    	PID[0].measurementValue	= Motor.position;
-
-		// #### do PID
-		PID[0].inputValue = PID_Controller(&PID[0]);
-
-		// #### Motor set input
-		if(PID[0].inputValue < -200)
-			Motor.setPWM = -200;
-		else if(PID[0].inputValue > 200)
-			Motor.setPWM = 200;
-		else
-			Motor.setPWM = PID[0].inputValue;
-	    PID[0].lastProcessValue = Motor.setPWM;
-
-		// Do some magic to limit integrated error
-		if(PID[0].sumError > 200)
-			PID[0].sumError = 200;
-		else if(PID[0].sumError < -200)
-			PID[0].sumError = -200;
-		// And magic continues to make PWM fade out as much as possible
-        if(PID[0].sumError > 0)
-            PID[0].sumError --;
-        else if(PID[0].sumError < 0)
-            PID[0].sumError ++;
-        if(PID[0].lastProcessValue > 0)
-            PID[0].lastProcessValue --;
-        else if(PID[0].lastProcessValue < 0)
-            PID[0].lastProcessValue ++;
-
-        Motor.setPWM = 5 * Motor.setPWM;	// MOTORx_SetInput: -1000 <= inputValue <= 1000
+		Motor.setTargetPosition = NFComBuf.SetDrivesPosition.data[0];
+		motorPositionToPWM();
+		break;
+	case NF_DrivesMode_PWM:
+		Motor.setPWM = NFComBuf.SetDrivesPWM.data[0];
 		break;
 	default:
 		Motor.setPWM = 0;
@@ -77,9 +39,68 @@ void MOTOR_Proc(void) {
 	BLDCMotorPrepareCommutation();
 	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
 
-	NFComBuf.ReadDrivesPosition.data[0] = Motor.position;
-	NFComBuf.ReadDeviceVitals.data[0] = Motor.speed;
+	NFComBuf.ReadDrivesPosition.data[0] = Motor.currentPosition;
+	NFComBuf.ReadDeviceVitals.data[0] = Motor.currentIncrement;
 
+}
+
+inline void motorSetSynchronizationSpeed(void) {
+	if()
+}
+
+inline void motorSpeedToPosition(void) {
+
+}
+
+inline void motorPositionToPWM(void) {
+	// Limit Position value
+	if(Motor.setPosition < NFComBuf.SetDrivesMinPosition.data[0])
+		Motor.setTargetPosition = NFComBuf.SetDrivesMinPosition.data[0];
+	else if(Motor.setPosition > NFComBuf.SetDrivesMaxPosition.data[0])
+		Motor.setTargetPosition = NFComBuf.SetDrivesMaxPosition.data[0];
+	else
+		Motor.setTargetPosition = NFComBuf.SetDrivesPosition.data[0];
+
+	// Limit Position increment
+	if(Motor.setTargetPosition > setStepPosition + POSITION_MAX_INCREMENT)
+		setStepPosition += POSITION_MAX_INCREMENT;
+	else if(Motor.setPosition < setStepPosition - POSITION_MAX_INCREMENT)
+		setStepPosition -= POSITION_MAX_INCREMENT;
+	else
+		setStepPosition = Motor.setTargetPosition;
+
+	// #### PID input data preparation
+	PID[0].referenceValue	= setStepPosition;
+	PID[0].measurementValue	= Motor.currentPosition;
+
+	// #### do PID
+	PID[0].inputValue = PID_Controller(&PID[0]);
+
+	// #### Motor set input
+	if(PID[0].inputValue < -200)
+		Motor.setPWM = -200;
+	else if(PID[0].inputValue > 200)
+		Motor.setPWM = 200;
+	else
+		Motor.setPWM = PID[0].inputValue;
+    PID[0].lastProcessValue = Motor.setPWM;
+
+	// Do some magic to limit integrated error
+	if(PID[0].sumError > 200)
+		PID[0].sumError = 200;
+	else if(PID[0].sumError < -200)
+		PID[0].sumError = -200;
+	// And magic continues to make PWM fade out as much as possible
+    if(PID[0].sumError > 0)
+        PID[0].sumError --;
+    else if(PID[0].sumError < 0)
+        PID[0].sumError ++;
+    if(PID[0].lastProcessValue > 0)
+        PID[0].lastProcessValue --;
+    else if(PID[0].lastProcessValue < 0)
+        PID[0].lastProcessValue ++;
+
+    Motor.setPWM = 5 * Motor.setPWM;	// MOTORx_SetInput: -1000 <= inputValue <= 1000
 }
 
 // BLDC motor steps

@@ -126,7 +126,7 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 		_END_GET_SETANDDO_MEMBER
 		else
 		_IF_MEMBER_THEN("?")
-			_PRINT_INT_RESPONSE(Motor.position)
+			_PRINT_INT_RESPONSE(Motor.currentPosition)
 	_ENDGROUP
 
 	else

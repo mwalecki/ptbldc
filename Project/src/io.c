@@ -30,7 +30,8 @@ uint8_t	MDSET4_isH(void)	{return(GPIO_ReadInputDataBit(MDSET4_PORT, MDSET4_PIN)!
 void OUT_Config(void){					  
 	GPIO_InitTypeDef GPIO_InitStructure;
 	// IO Clocks Enable
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOE, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC
+						 | RCC_APB2Periph_GPIOE, ENABLE);
 	/*	PORT B Push-Pull 10MHz Outputs:	*\
 		PC.13	OUT0					*/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
@@ -52,7 +53,11 @@ void OUT_Config(void){
 void IN_Config(void){					  
 	GPIO_InitTypeDef GPIO_InitStructure;
 	// IO Clocks Enable
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOD, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA
+						 | RCC_APB2Periph_GPIOB
+						 | RCC_APB2Periph_GPIOC
+						 | RCC_APB2Periph_GPIOD
+						 | RCC_APB2Periph_GPIOE, ENABLE);
 	/*	PORT C 10MHz Inputs Floating:	*\
 		PC.0	AIN0
 		PC.1	AIN1
@@ -73,6 +78,7 @@ void IN_Config(void){
 	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
 	/*	PORT B 10MHz Inputs Floating:	*\
 		PB.0	SEN_12V
 		PB.1	SEN_5V					*/
@@ -102,6 +108,34 @@ void IN_Config(void){
 	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
 	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_Init(GPIOE, &GPIO_InitStructure);
+
+	/*	PORT E 10MHz Inputs Floating:	*\
+		PE.14	ENABLE					*/
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOE, &GPIO_InitStructure);
+
+	/*	PORT A 10MHz Inputs Floating:	*\
+		PA.3	LIM_POS					*/
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	/*	PORT C 10MHz Inputs Floating:	*\
+		PC.2	HOME
+		PC.3	LIM_NEG					*/
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
 }
 
 const char *u8_to_binary(u8 x, u8 oldestBitNo)
@@ -128,4 +162,20 @@ void OUT_Set(u8 set){
 
 uint8_t OUT_Read(void){
 	return outSetByte;
+}
+
+uint8_t IN_ReadHOME(void){
+	return GPIO_ReadInputDataBit(IN_HOME_GPIO, IN_HOME_PIN);
+}
+
+uint8_t IN_ReadENABLE(void){
+	return GPIO_ReadInputDataBit(IN_ENABLE_GPIO, IN_ENABLE_PIN);
+}
+
+uint8_t IN_ReadLIMITPOS(void){
+	return GPIO_ReadInputDataBit(IN_LIM_POS_GPIO, IN_LIM_POS_PIN);
+}
+
+uint8_t IN_ReadLIMITNEG(void){
+	return GPIO_ReadInputDataBit(IN_LIM_NEG_GPIO, IN_LIM_NEG_PIN);
 }

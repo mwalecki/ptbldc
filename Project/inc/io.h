@@ -23,6 +23,8 @@
 	#define IN_LIM_NEG_PIN	GPIO_Pin_3
 	#define IN_LIM_POS_GPIO	GPIOA
 	#define IN_LIM_POS_PIN	GPIO_Pin_3
+	#define IN_ENABLE_GPIO	GPIOE
+	#define IN_ENABLE_PIN	GPIO_Pin_14
 
 	//##                                      #### ######## ################ OUT port map:
 	#define OUT0_GPIO	GPIOC
