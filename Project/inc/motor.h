@@ -38,6 +38,7 @@ typedef struct{
 	int16_t currentIncrement;
 	int32_t previousPosition;
 	int32_t currentPosition;
+	uint8_t synchronizingToEncIndex;
 	uint8_t isSynchronized;
 } MOTOR_St;
 

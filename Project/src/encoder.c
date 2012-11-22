@@ -1,10 +1,18 @@
 #include "encoder.h"
+#include "motor.h"
+
+extern MOTOR_St				Motor;
+
+//##                                      #### ######## ################ PRIVATE GLOBALS
+static uint32_t old16Position = 0;
+static int32_t ovfCounter = 0;
 
 void  ENCODER1_Config(void) {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 	TIM_ICInitTypeDef  TIM_ICInitStructure;
-//	NVIC_InitTypeDef NVIC_InitStructure;
+	EXTI_InitTypeDef   EXTI_InitStructure;
+	NVIC_InitTypeDef   NVIC_InitStructure;
 
 	// AFIO Clock Enable
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
@@ -61,20 +69,47 @@ void  ENCODER1_Config(void) {
 	TIM_Cmd(TIM2, ENABLE);
 
 
-	//3.---------------------NVIC!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1------------------------------------------
+	// Index line Interrupt
+	/* Connect EXTI0 Line to PA.2 pin */
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource2);
+	/* Configure EXTI0 line */
+	EXTI_InitStructure.EXTI_Line = EXTI_Line0;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);
+	/* Enable and set EXTI0 Interrupt to the lowest priority */
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+}
 
-	//przerwanie ogolne od timera8
-//	NVIC_InitStructure.NVIC_IRQChannel = TIM2_UP_IRQn;//TIM_IT_CC1;
-//	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-//	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-//	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-//	NVIC_Init(&NVIC_InitStructure);
+/**
+  * @brief  This function handles External line 0 interrupt request (Encoder1 Index Line rising)
+  * @param  None
+  * @retval None
+  */
+void EXTI0_IRQHandler(void)
+{
+	if(EXTI_GetITStatus(EXTI_Line0) != RESET)
+	{
+		if(Motor.synchronizingToEncIndex){
+			TIM2->CNT = 0;
+			ovfCounter = 0;
+			old16Position = 0;
+			Motor.previousPosition = 0;
+			Motor.isSynchronized = 1;
+			Motor.synchronizingToEncIndex = 0;
+		}
+		/* Clear the  EXTI line 0 pending bit */
+		EXTI_ClearITPendingBit(EXTI_Line0);
+	}
 }
 
 
 int32_t ENCODER1_Position(void){
-	static uint32_t old16Position = 0;
-	static int32_t ovfCounter = 0;
 	uint32_t new16Position;
 	int32_t position;
 

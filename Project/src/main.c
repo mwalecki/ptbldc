@@ -74,6 +74,8 @@ int main(void)
 			LED_symMINUS,	//newState
 			LED_DP);		//blink
 
+	NFComBuf.SetDrivesMode.data[0] = NF_DrivesMode_SYNC_AUTO;
+
 	//#### MAIN LOOP ####//
 	while (1){
 //		commCnt = 0;
