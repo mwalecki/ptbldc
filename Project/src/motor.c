@@ -11,7 +11,6 @@ extern PID_St				PID[];
 
 
 //##                                      #### ######## ################ PRIVATE GLOBALS
-static int32_t setStepPosition = 0;
 
 void MOTOR_Proc(void) {
 
@@ -75,6 +74,9 @@ inline void motorSpeedToPosition(void) {
 }
 
 inline void motorPositionToPWM(void) {
+	if(Motor.previousMode != NF_DrivesMode_POSITION){
+		Motor.setPosition = Motor.currentPosition;
+	}
 	// Limit Position value
 	if(Motor.setPosition < NFComBuf.SetDrivesMinPosition.data[0])
 		Motor.setTargetPosition = NFComBuf.SetDrivesMinPosition.data[0];
@@ -84,15 +86,15 @@ inline void motorPositionToPWM(void) {
 		Motor.setTargetPosition = NFComBuf.SetDrivesPosition.data[0];
 
 	// Limit Position increment
-	if(Motor.setTargetPosition > setStepPosition + POSITION_MAX_INCREMENT)
-		setStepPosition += POSITION_MAX_INCREMENT;
-	else if(Motor.setPosition < setStepPosition - POSITION_MAX_INCREMENT)
-		setStepPosition -= POSITION_MAX_INCREMENT;
+	if(Motor.setTargetPosition > Motor.setPosition + POSITION_MAX_INCREMENT)
+		Motor.setPosition += POSITION_MAX_INCREMENT;
+	else if(Motor.setTargetPosition < Motor.setPosition - POSITION_MAX_INCREMENT)
+		Motor.setPosition -= POSITION_MAX_INCREMENT;
 	else
-		setStepPosition = Motor.setTargetPosition;
+		Motor.setPosition = Motor.setTargetPosition;
 
 	// #### PID input data preparation
-	PID[0].referenceValue	= setStepPosition;
+	PID[0].referenceValue	= Motor.setPosition;
 	PID[0].measurementValue	= Motor.currentPosition;
 
 	// #### do PID

@@ -4,7 +4,7 @@
 #include "common.h"		
 
 #define SYNCHRONIZATION_INCREMENT 	5
-#define POSITION_MAX_INCREMENT		20
+#define POSITION_MAX_INCREMENT		10
 
 #define TIM1PERIOD	1000
 #define MAX_PWM		TIM1PERIOD
