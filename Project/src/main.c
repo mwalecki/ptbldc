@@ -74,7 +74,7 @@ int main(void)
 			LED_symMINUS,	//newState
 			LED_DP);		//blink
 
-	NFComBuf.SetDrivesMode.data[0] = NF_DrivesMode_SYNC_AUTO;
+//	NFComBuf.SetDrivesMode.data[0] = NF_DrivesMode_SYNC_POS0;
 
 	//#### MAIN LOOP ####//
 	while (1){
@@ -120,23 +120,23 @@ int main(void)
 				NFComBuf.SetDigitalOutputs.updated = 0;
 			}
 			if(NFComBuf.SetDrivesMode.updated){
-				Motor.mode = NFComBuf.SetDrivesMode.data[0];
+				// MOTORS_Proc() gets these values directly from NFComBuf.
 				NFComBuf.SetDrivesMode.updated = 0;
 			}
 			if(NFComBuf.SetDrivesPWM.updated){
-				// MOTORS_Proc() gets desired values directly from NFComBuf.
+				// MOTORS_Proc() gets these values directly from NFComBuf.
 				NFComBuf.SetDrivesPWM.updated = 0;
 			}
 			if(NFComBuf.SetDrivesPosition.updated){
-				// MOTORS_Proc() gets desired values directly from NFComBuf.
+				// MOTORS_Proc() gets these values directly from NFComBuf.
 				NFComBuf.SetDrivesPosition.updated = 0;
 			}
 			if(NFComBuf.SetDrivesMinPosition.updated){
-				// MOTORS_Proc() gets desired values directly from NFComBuf.
+				// MOTORS_Proc() gets these values directly from NFComBuf.
 				NFComBuf.SetDrivesMinPosition.updated = 0;
 			}
 			if(NFComBuf.SetDrivesMaxPosition.updated){
-				// MOTORS_Proc() gets desired values directly from NFComBuf.
+				// MOTORS_Proc() gets these values directly from NFComBuf.
 				NFComBuf.SetDrivesMaxPosition.updated = 0;
 			}
 			if(NFComBuf.SetPositionRegulator.updated){

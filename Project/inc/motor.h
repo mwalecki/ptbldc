@@ -4,7 +4,7 @@
 #include "common.h"		
 
 #define SYNCHRONIZATION_INCREMENT 	5
-#define POSITION_MAX_INCREMENT		10
+#define POSITION_MAX_INCREMENT		20
 
 #define TIM1PERIOD	1000
 #define MAX_PWM		TIM1PERIOD
@@ -40,6 +40,10 @@ typedef struct{
 	int32_t currentPosition;
 	uint8_t synchronizingToEncIndex;
 	uint8_t isSynchronized;
+	uint8_t positionLimit;
+	uint8_t limitSwitchUp;
+	uint8_t limitSwitchDown;
+	uint8_t enableSignal;
 } MOTOR_St;
 
 //##                                      #### ######## ################ PROTOTYPES:
@@ -47,6 +51,7 @@ typedef struct{
 inline void motorSetSynchronizationSpeed(void);
 inline void motorSpeedToPosition(void);
 inline void motorPositionToPWM(void);
+inline void motorPWMpositionLimit(void);
 
 void MOTOR_Config(void);
 void MOTOR_SetPWM(s16 input);

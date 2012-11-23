@@ -17,12 +17,13 @@ void MOTOR_Proc(void) {
 	Motor.previousPosition = Motor.currentPosition;
 	Motor.currentPosition = ENCODER1_Position();
 	Motor.currentIncrement = Motor.currentPosition - Motor.previousPosition;
+	Motor.enableSignal = (IN_ReadENABLE() == 0) ? 1 : 0;
 
 	Motor.previousMode = Motor.mode;
 	Motor.mode = NFComBuf.SetDrivesMode.data[0];
 
 	switch(Motor.mode){
-	case NF_DrivesMode_SYNC_AUTO:
+	case NF_DrivesMode_SYNC_POS0:
 		motorSetSynchronizationSpeed();
 		motorSpeedToPosition();
 		motorPositionToPWM();
@@ -33,6 +34,7 @@ void MOTOR_Proc(void) {
 		break;
 	case NF_DrivesMode_PWM:
 		Motor.setPWM = NFComBuf.SetDrivesPWM.data[0];
+		motorPWMpositionLimit();
 		break;
 	default:
 		Motor.setPWM = 0;
@@ -44,19 +46,24 @@ void MOTOR_Proc(void) {
 
 	NFComBuf.ReadDrivesPosition.data[0] = Motor.currentPosition;
 	NFComBuf.ReadDeviceVitals.data[0] = Motor.currentIncrement;
+	NFComBuf.ReadDrivesStatus.data[0] = Motor.isSynchronized ? NF_DrivesStatus_Synchronized : 0
+									| 	Motor.positionLimit ? NF_DrivesStatus_PositionLimit : 0
+									| 	Motor.enableSignal ? 0 : NF_DrivesStatus_Error
+									| 	(Motor.mode == NF_DrivesMode_ERROR) ? NF_DrivesStatus_Error : 0;
 
 }
 
 inline void motorSetSynchronizationSpeed(void) {
 	static uint8_t homeAreaChecked;
 
+	if(Motor.previousMode != NF_DrivesMode_SYNC_POS0){
+		Motor.isSynchronized = 0;
+		Motor.setIncrement = Motor.currentIncrement;
+		homeAreaChecked = 0;
+	}
 	if(Motor.isSynchronized){
 		Motor.setIncrement = 0;
 		return;
-	}
-	if(Motor.previousMode != NF_DrivesMode_SYNC_AUTO){
-		Motor.setIncrement = Motor.currentIncrement;
-		homeAreaChecked = 0;
 	}
 	if(IN_ReadHOME()){
 		homeAreaChecked = 1;
@@ -86,10 +93,20 @@ inline void motorPositionToPWM(void) {
 		Motor.setPosition = Motor.currentPosition;
 	}
 	// Limit Position value
-	if(Motor.setTargetPosition < NFComBuf.SetDrivesMinPosition.data[0])
-		Motor.setTargetPosition = NFComBuf.SetDrivesMinPosition.data[0];
-	else if(Motor.setTargetPosition > NFComBuf.SetDrivesMaxPosition.data[0])
-		Motor.setTargetPosition = NFComBuf.SetDrivesMaxPosition.data[0];
+	if(Motor.mode != NF_DrivesMode_SYNC_POS0) {
+		if(Motor.setTargetPosition < NFComBuf.SetDrivesMinPosition.data[0]) {
+			Motor.positionLimit = 1;
+			Motor.setTargetPosition = NFComBuf.SetDrivesMinPosition.data[0];
+		}
+		else if(Motor.setTargetPosition > NFComBuf.SetDrivesMaxPosition.data[0]) {
+			Motor.positionLimit = 1;
+			Motor.setTargetPosition = NFComBuf.SetDrivesMaxPosition.data[0];
+		}
+		else
+			Motor.positionLimit = 0;
+	}
+	else
+		Motor.positionLimit = 0;
 
 	// Limit Position increment
 	if(Motor.setTargetPosition > Motor.setPosition + POSITION_MAX_INCREMENT)
@@ -131,6 +148,21 @@ inline void motorPositionToPWM(void) {
         PID[0].lastProcessValue ++;
 
     Motor.setPWM = 5 * Motor.setPWM;	// MOTORx_SetInput: -1000 <= inputValue <= 1000
+}
+
+inline void motorPWMpositionLimit(void) {
+	if(Motor.currentPosition < NFComBuf.SetDrivesMinPosition.data[0]) {
+		Motor.positionLimit = 1;
+		if(Motor.setPWM < 0)
+				Motor.setPWM = 0;
+	}
+	else if(Motor.currentPosition > NFComBuf.SetDrivesMaxPosition.data[0]) {
+		Motor.positionLimit = 1;
+		if(Motor.setPWM > 0)
+				Motor.setPWM = 0;
+	}
+	else
+		Motor.positionLimit = 0;
 }
 
 // BLDC motor steps
