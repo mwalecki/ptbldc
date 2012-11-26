@@ -46,10 +46,10 @@ void MOTOR_Proc(void) {
 
 	NFComBuf.ReadDrivesPosition.data[0] = Motor.currentPosition;
 	NFComBuf.ReadDeviceVitals.data[0] = Motor.currentIncrement;
-	NFComBuf.ReadDrivesStatus.data[0] = Motor.isSynchronized ? NF_DrivesStatus_Synchronized : 0
-									| 	Motor.positionLimit ? NF_DrivesStatus_PositionLimit : 0
-									| 	Motor.enableSignal ? 0 : NF_DrivesStatus_Error
-									| 	(Motor.mode == NF_DrivesMode_ERROR) ? NF_DrivesStatus_Error : 0;
+	NFComBuf.ReadDrivesStatus.data[0] = (Motor.isSynchronized ? NF_DrivesStatus_Synchronized : 0)
+									| 	(Motor.positionLimit ? NF_DrivesStatus_PositionLimit : 0)
+									| 	(Motor.enableSignal ? 0 : NF_DrivesStatus_Error)
+									| 	((Motor.mode == NF_DrivesMode_ERROR) ? NF_DrivesStatus_Error : 0);
 
 }
 
