@@ -18,6 +18,8 @@
 #include "usb.h"
 #include "pid.h"
 
+
+
 //##                                      #### ######## ################ GLOBALS	 
 USART_St			Usart1, USBBufs1, USBBufs2;
 LED_St				Led;
@@ -34,7 +36,7 @@ void SystemMonitor(void);
 //##                                      #### ######## ################ MAIN
 int main(void)									  
 {
-	uint8_t usbBytesToSend1, usbBytesToSend2, usbLastByteReceived;
+	uint8_t usartBytesToSend, usbBytesToSend1, usbBytesToSend2, usbLastByteReceived;
 	uint8_t commArray[10];
 	uint8_t commCnt;
 	
@@ -50,7 +52,7 @@ int main(void)
 	LED_Config();
 	IN_Config();
 //	OUT_Config();
-//	USART1_Config();
+	USART1_Config();
 	HALL_Config();
 	MOTOR_Config();
 	ENCODER1_Config();
@@ -68,18 +70,14 @@ int main(void)
 	// Execute NFv2_Config() after init of all peripherals. 
 	// NFv2_Config() may set some data in NFComBuf to current values
 	// read from already initiated peripherals.
-	NFv2_Config(&NFComBuf, NF_AddressBase);
+	NFv2_Config(&NFComBuf, NF_AddressBase + IN_ReadAddress());
 
 	LED_Set(LED_ALL, 		//mask
 			LED_symMINUS,	//newState
 			LED_DP);		//blink
 
-//	NFComBuf.SetDrivesMode.data[0] = NF_DrivesMode_SYNC_POS0;
-
 	//#### MAIN LOOP ####//
 	while (1){
-//		commCnt = 0;
-
 		if(STDownCnt[ST_UsartTxDelay].tick){
 			if(Usart1.txDataReady){
 				USART1_SendString((char*) Usart1.txBuf);
@@ -91,21 +89,13 @@ int main(void)
 		{
 			strncpy((char*)Usart1.tmpBuf,(const char*)Usart1.rxBuf, 15);
 			Usart1.rxDataReady=0;
-		//	USART1_Interpreter((u8*)Usart1.tmpBuf);
 			ST_Reset(ST_UsartCmdWD);// USART Command Watchdog Reset
 		}		   									
 		//#### #### SYSTICK EVENT FOR STATUS LED 
 		if(STDownCnt[ST_StatusLed].tick){	
 			STDownCnt[ST_StatusLed].tick = 0;
 			LED_Proc();
-//			if(bDeviceState == CONFIGURED){
-//				usbBytesToSend1 = my_itoa(HALL_Pattern(), (char*)USBBufs1.txBuf, 10);
-//				USB_SendNBytes((uint8_t*)USBBufs1.txBuf, usbBytesToSend1);
-//				USB_SendNBytes((uint8_t*)"\r\n", 2);
-//			}
-		//	USART1_SendString(Usart1.rxBuf);
-		//	USART1_SendString("\r\n\n");
-		//	USART1_SendNBytes("test\r\n", 6);
+			USART1_SendString("Test\r\n");
 		}	
 		if(STDownCnt[ST_Monitor].tick){
 			STDownCnt[ST_Monitor].tick = 0;
@@ -169,6 +159,22 @@ int main(void)
 						usbBytesToSend2 = NF_MakeCommandFrame(&NFComBuf, (uint8_t*)USBBufs2.txBuf, (const uint8_t*)commArray, commCnt, NFComBuf.myAddress);
 						USB_SendNBytes((uint8_t*)USBBufs2.txBuf, usbBytesToSend2);
 					}
+					// Prepare to send parameters to slave device
+					if(NFComBuf.SetDrivesMode.updated)
+						commArray[commCnt++] = NF_COMMAND_SetDrivesMode;
+					if(NFComBuf.SetDrivesPWM.updated)
+						commArray[commCnt++] = NF_COMMAND_SetDrivesPWM;
+					if(NFComBuf.SetDrivesSpeed.updated)
+						commArray[commCnt++] = NF_COMMAND_SetDrivesSpeed;
+					if(NFComBuf.SetDrivesPosition.updated)
+						commArray[commCnt++] = NF_COMMAND_SetDrivesPosition;
+					if(NFComBuf.SetDrivesMinPosition.updated)
+						commArray[commCnt++] = NF_COMMAND_SetDrivesMinPosition;
+					if(NFComBuf.SetDrivesMaxPosition.updated)
+						commArray[commCnt++] = NF_COMMAND_SetDrivesMaxPosition;
+
+					usartBytesToSend = NF_MakeCommandFrame(&NFComBuf, (uint8_t*)Usart1.txBuf, (const uint8_t*)commArray, commCnt, NFComBuf.myAddress + 1);
+					USART1_SendNBytes((uint8_t*)Usart1.txBuf, usartBytesToSend);
 				}
 			}
 	    }
@@ -176,12 +182,25 @@ int main(void)
 }
 
 void SystemMonitor(void){
+	static uint8_t oldAddress = 0xff;
 	static uint32_t oldDevSate = UNCONNECTED;
+	static uint8_t oldDrivesMode = NF_DrivesMode_ERROR;
 	
+	if(NFComBuf.myAddress != oldAddress){
+		switch(NFComBuf.myAddress){
+			case 0: LED_Set(LED_DIGIT, LED_sym0, 0); break;
+			case 1: LED_Set(LED_DIGIT, LED_sym1, 0); break;
+			case 2: LED_Set(LED_DIGIT, LED_sym2, 0); break;
+			case 3: LED_Set(LED_DIGIT, LED_sym3, 0); break;
+			case 4: LED_Set(LED_DIGIT, LED_sym4, 0); break;
+		}
+		oldAddress = NFComBuf.myAddress;
+	}
+
 	if((bDeviceState != oldDevSate) && (bDeviceState == CONFIGURED)){
-		LED_Set(LED_DIGIT, 		//mask
-				LED_symu,		//newState
-				0);		//blink
+		LED_Set(LED_DIGIT, 	//mask
+				LED_symu,	//newState
+				0);			//blink
 		oldDevSate = bDeviceState;
 	}
 }

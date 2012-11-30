@@ -21,12 +21,6 @@ void OUT7_OFF(void)		{GPIO_ResetBits(OUT7_GPIO, OUT7_PIN);}
 void OUT8_ON(void)		{GPIO_SetBits(OUT8_GPIO, OUT8_PIN);}
 void OUT8_OFF(void)		{GPIO_ResetBits(OUT8_GPIO, OUT8_PIN);}*/
 
-uint8_t	MDSET0_isH(void)	{return(GPIO_ReadInputDataBit(MDSET0_PORT, MDSET0_PIN)!=0);}
-uint8_t	MDSET1_isH(void)	{return(GPIO_ReadInputDataBit(MDSET1_PORT, MDSET1_PIN)!=0);}
-uint8_t	MDSET2_isH(void)	{return(GPIO_ReadInputDataBit(MDSET2_PORT, MDSET2_PIN)!=0);}
-uint8_t	MDSET3_isH(void)	{return(GPIO_ReadInputDataBit(MDSET3_PORT, MDSET3_PIN)!=0);}
-uint8_t	MDSET4_isH(void)	{return(GPIO_ReadInputDataBit(MDSET4_PORT, MDSET4_PIN)!=0);}
-
 void OUT_Config(void){					  
 	GPIO_InitTypeDef GPIO_InitStructure;
 	// IO Clocks Enable
@@ -101,7 +95,7 @@ void IN_Config(void){
 	GPIO_Init(GPIOD, &GPIO_InitStructure);
 	/*	PORT E 10MHz Inputs with PullUp:*\
 		PE.0	ADDR3
-		PE.1	ADDR4/MODE				*/
+		PE.1	ADDR4/MODE0				*/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
@@ -178,4 +172,16 @@ uint8_t IN_ReadLIMITPOS(void){
 
 uint8_t IN_ReadLIMITNEG(void){
 	return GPIO_ReadInputDataBit(IN_LIM_NEG_GPIO, IN_LIM_NEG_PIN);
+}
+
+uint8_t IN_ReadAddress(void){
+	return ((1 - GPIO_ReadInputDataBit(ADDR3_GPIO, ADDR3_PIN)) << 3)
+			| ((1 - GPIO_ReadInputDataBit(ADDR2_GPIO, ADDR2_PIN)) << 2)
+			| ((1 - GPIO_ReadInputDataBit(ADDR1_GPIO, ADDR1_PIN)) << 1)
+			| ((1 - GPIO_ReadInputDataBit(ADDR0_GPIO, ADDR0_PIN)) << 0);
+}
+
+
+uint8_t IN_ReadMode(void){
+	return (1 - GPIO_ReadInputDataBit(MODE0_GPIO, MODE0_PIN));
 }

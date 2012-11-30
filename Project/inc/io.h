@@ -5,16 +5,19 @@
 
 #if defined MW1209A
 	//##                                      #### ######## ################ ADDR/MODE port map:
-	#define	MDSET0_PORT	GPIOD
-	#define	MDSET0_PIN	GPIO_Pin_5
-	#define	MDSET1_PORT	GPIOD
-	#define	MDSET1_PIN	GPIO_Pin_6
-	#define	MDSET2_PORT	GPIOD
-	#define	MDSET2_PIN	GPIO_Pin_7
-	#define	MDSET3_PORT	GPIOE
-	#define	MDSET3_PIN	GPIO_Pin_0
-	#define	MDSET4_PORT	GPIOE
-	#define	MDSET4_PIN	GPIO_Pin_1
+	#define	ADDR0_GPIO	GPIOD
+	#define	ADDR0_PIN	GPIO_Pin_5
+	#define	ADDR1_GPIO	GPIOD
+	#define	ADDR1_PIN	GPIO_Pin_6
+	#define	ADDR2_GPIO	GPIOD
+	#define	ADDR2_PIN	GPIO_Pin_7
+	#define	ADDR3_GPIO	GPIOE
+	#define	ADDR3_PIN	GPIO_Pin_0
+	#define	ADDR4_GPIO	GPIOE
+	#define	ADDR4_PIN	GPIO_Pin_1
+
+	#define	MODE0_GPIO	ADDR4_GPIO
+	#define	MODE0_PIN	ADDR4_PIN
 
 	//##                                      #### ######## ################ IN port map:
 	#define IN_HOME_GPIO	GPIOC
@@ -62,16 +65,12 @@
 	#error Define Module Version: MW1209A/B/C
 #endif
 
-uint8_t	MDSET0_isH(void);
-uint8_t	MDSET1_isH(void);
-uint8_t	MDSET2_isH(void);
-uint8_t	MDSET3_isH(void);
-uint8_t	MDSET4_isH(void);
-
 uint8_t IN_ReadHOME(void);
 uint8_t IN_ReadENABLE(void);
 uint8_t IN_ReadLIMITPOS(void);
 uint8_t IN_ReadLIMITNEG(void);
+uint8_t IN_ReadAddress(void);
+uint8_t IN_ReadMode(void);
 
 void OUT_Config(void);
 void IN_Config(void);

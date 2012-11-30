@@ -13,26 +13,26 @@
 * Uncomment and update buffers' size [no of param set instances] for commands
 * to be supported by module:
 */
-	#define NF_BUFSZ_ReadDeviceStatus		1
-	#define NF_BUFSZ_ReadDeviceVitals		1
+	#define NF_BUFSZ_ReadDeviceStatus		2
+	#define NF_BUFSZ_ReadDeviceVitals		2
 
-	#define NF_BUFSZ_SetDrivesMode			1
-	#define NF_BUFSZ_SetDrivesSpeed			1
-//	#define NF_BUFSZ_SetDrivesCurrent		1
-	#define NF_BUFSZ_SetDrivesPosition		1
-	#define NF_BUFSZ_SetDrivesPWM			1
-	#define NF_BUFSZ_SetDrivesMaxCurrent	1
-	#define NF_BUFSZ_SetDrivesMaxSpeed		1
-	#define NF_BUFSZ_SetDrivesMinPosition	1
-	#define NF_BUFSZ_SetDrivesMaxPosition	1
-	#define NF_BUFSZ_ReadDrivesPosition		1
-	#define NF_BUFSZ_ReadDrivesCurrent		1
-	#define NF_BUFSZ_SetDrivesMisc			1
-	#define NF_BUFSZ_ReadDrivesStatus		1
+	#define NF_BUFSZ_SetDrivesMode			2
+	#define NF_BUFSZ_SetDrivesSpeed			2
+//	#define NF_BUFSZ_SetDrivesCurrent		2
+	#define NF_BUFSZ_SetDrivesPosition		2
+	#define NF_BUFSZ_SetDrivesPWM			2
+	#define NF_BUFSZ_SetDrivesMaxCurrent	2
+	#define NF_BUFSZ_SetDrivesMaxSpeed		2
+	#define NF_BUFSZ_SetDrivesMinPosition	2
+	#define NF_BUFSZ_SetDrivesMaxPosition	2
+	#define NF_BUFSZ_ReadDrivesPosition		2
+	#define NF_BUFSZ_ReadDrivesCurrent		2
+	#define NF_BUFSZ_SetDrivesMisc			2
+	#define NF_BUFSZ_ReadDrivesStatus		2
 	
-	#define NF_BUFSZ_SetCurrentRegulator	1
-	#define NF_BUFSZ_SetSpeedRegulator		1
-	#define NF_BUFSZ_SetPositionRegulator	1
+	#define NF_BUFSZ_SetCurrentRegulator	2
+	#define NF_BUFSZ_SetSpeedRegulator		2
+	#define NF_BUFSZ_SetPositionRegulator	2
 
 //	#define NF_BUFSZ_SetServosMode			28
 //	#define NF_BUFSZ_SetServosPosition		28
@@ -46,9 +46,9 @@
 //	#define NF_BUFSZ_SetServosMisc			28
 //	#define NF_BUFSZ_ReadServosStatus		28
 											
-	#define NF_BUFSZ_SetDigitalOutputs		1
-	#define NF_BUFSZ_ReadDigitalInputs		1
-	#define NF_BUFSZ_ReadAnalogInputs		9
+	#define NF_BUFSZ_SetDigitalOutputs		2
+	#define NF_BUFSZ_ReadDigitalInputs		2
+	#define NF_BUFSZ_ReadAnalogInputs		18
 	
 //	#define NF_BUFSZ_ReadDistance			8  
 	
