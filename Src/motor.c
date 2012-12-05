@@ -1,9 +1,9 @@
 #include "motor.h"
 #include "hall.h"
 #include "encoder.h"
-#include "nfv2.h"
 #include "pid.h"
 #include "io.h"
+#include "nf/nfv2.h"
 
 extern MOTOR_St				Motor;
 extern NF_STRUCT_ComBuf 	NFComBuf;

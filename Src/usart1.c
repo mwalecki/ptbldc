@@ -1,6 +1,6 @@
 #include "usart1.h"
 #include "systick.h"
-#include "nfv2.h"
+#include "nf/nfv2.h"
 								 
 extern SERVO_St		Servo;
 extern USART_St		Usart1;

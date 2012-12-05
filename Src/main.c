@@ -12,11 +12,10 @@
 #include "adc.h"
 #include "eeprom.h"
 #include "eebackup.h"
-#include "myscpi.h"
-#include "mycrc.h"
-#include "nfv2.h"
 #include "usb.h"
 #include "pid.h"
+#include "myscpi/myscpi.h"
+#include "nf/nfv2.h"
 
 
 
@@ -62,7 +61,7 @@ int main(void)
 	ADCwithDMA_Config();
 	NVIC_Configuration();
 	USB_Config();
-	crcInit();
+	NFv2_CrcInit();
 	PID_Init(&PID[0]);
 //	PID_Init(&PID[1]);
 //	PID_Init(&PID[2]);

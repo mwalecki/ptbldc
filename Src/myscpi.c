@@ -1,6 +1,4 @@
-#include "myscpi_defines.h"
-#include "myscpi.h"
-
+#include "myscpi/myscpi.h"
 #include "common.h"		
 #include "led.h"  	
 #include "motor.h"
@@ -8,7 +6,7 @@
 #include "eebackup.h"
 #include "io.h"
 #include "adc.h"
-#include "nfv2.h"
+#include "nf/nfv2.h"
 
 extern MOTOR_St				Motor;
 extern uint16_t 			serialNumber;

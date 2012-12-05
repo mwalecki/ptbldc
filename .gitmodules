@@ -1,0 +1,6 @@
+[submodule "Src/myscpi"]
+	path = Src/myscpi
+	url = git@github.com:mwalecki/myscpi.git
+[submodule "Src/nf"]
+	path = Src/nf
+	url = git@github.com:mwalecki/nf.git
