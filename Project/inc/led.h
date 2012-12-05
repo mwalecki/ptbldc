@@ -5,18 +5,21 @@
 
 //##                                      #### ######## ################ LED patterns:
 #define LED_ALL	0xff
-#define LED_A	1<<0
-#define LED_B	1<<1
-#define LED_C	1<<2
-#define LED_D	1<<3
-#define LED_E	1<<4
-#define LED_F	1<<5
-#define LED_G	1<<6
+#define LED_A	1<<0	//	 AAA
+#define LED_B	1<<1	//	F   B
+#define LED_C	1<<2	//	F   B
+#define LED_D	1<<3	//	 GGG
+#define LED_E	1<<4	//	E   C
+#define LED_F	1<<5	//	E   C
+#define LED_G	1<<6	//	 DDD  DP
 #define LED_DP	1<<7
 #define LED_DIGIT		0x7f
 #define LED_symMINUS	LED_G
 #define LED_symS		LED_A|LED_F|LED_G|LED_C|LED_D
 #define LED_symP		LED_A|LED_F|LED_B|LED_G|LED_E
+#define LED_symE		LED_A|LED_D|LED_E|LED_F|LED_G
+#define LED_symt		LED_D|LED_E|LED_F|LED_G
+#define LED_symb		LED_C|LED_D|LED_E|LED_F|LED_G
 #define LED_symu		LED_C|LED_D|LED_E
 #define LED_symU		LED_B|LED_C|LED_D|LED_E|LED_F
 #define LED_symc		LED_D|LED_E|LED_G
@@ -26,6 +29,7 @@
 #define LED_sym2		LED_A|LED_B|LED_D|LED_E|LED_G
 #define LED_sym3		LED_A|LED_B|LED_C|LED_D|LED_G
 #define LED_sym4		LED_B|LED_C|LED_F|LED_G
+#define LED_symStop		LED_A|LED_D|LED_G
 
 
 //##                                      #### ######## ################ LED port map:

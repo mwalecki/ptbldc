@@ -184,8 +184,16 @@ int main(void)
 void SystemMonitor(void){
 	static uint8_t oldAddress = 0xff;
 	static uint32_t oldDevSate = UNCONNECTED;
-	static uint8_t oldDrivesMode = NF_DrivesMode_ERROR;
+	static uint8_t oldDrivesMode = 0xff;
+	static uint8_t oldEnableSignal = 0xff;
+	static uint8_t displayCnt = 0;
+	#define DISPLAY_LAG  10
 	
+	if(displayCnt){
+		displayCnt --;
+		return;
+	}
+
 	if(NFComBuf.myAddress != oldAddress){
 		switch(NFComBuf.myAddress){
 			case 0: LED_Set(LED_DIGIT, LED_sym0, 0); break;
@@ -195,6 +203,8 @@ void SystemMonitor(void){
 			case 4: LED_Set(LED_DIGIT, LED_sym4, 0); break;
 		}
 		oldAddress = NFComBuf.myAddress;
+		displayCnt = DISPLAY_LAG;
+		return;
 	}
 
 	if((bDeviceState != oldDevSate) && (bDeviceState == CONFIGURED)){
@@ -202,5 +212,30 @@ void SystemMonitor(void){
 				LED_symu,	//newState
 				0);			//blink
 		oldDevSate = bDeviceState;
+		displayCnt = DISPLAY_LAG;
+		return;
+	}
+
+	if(Motor.enableSignal != oldEnableSignal){
+		if(Motor.enableSignal == 0){
+			LED_Set(LED_DIGIT, LED_symStop, 0);
+		}
+		else
+			oldDrivesMode = 0xff;
+		oldEnableSignal = Motor.enableSignal;
+	}
+
+	if(Motor.mode != oldDrivesMode){
+		switch(Motor.mode){
+			case NF_DrivesMode_ERROR:		LED_Set(LED_DIGIT, LED_symE, 0); break;
+			case NF_DrivesMode_PWM:			LED_Set(LED_DIGIT, LED_symt, 0); break;
+			case NF_DrivesMode_SPEED:		LED_Set(LED_DIGIT, LED_symS, 0); break;
+			case NF_DrivesMode_POSITION:	LED_Set(LED_DIGIT, LED_symP, 0); break;
+			case NF_DrivesMode_SYNC_POS0:	LED_Set(LED_DIGIT, LED_symb, 0); break;
+		}
+		oldEnableSignal = 0xff;
+		oldDrivesMode = Motor.mode;
+		displayCnt = DISPLAY_LAG;
+		return;
 	}
 }
