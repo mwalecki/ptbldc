@@ -100,6 +100,8 @@ void EXTI0_IRQHandler(void)
 			ovfCounter = 0;
 			old16Position = 0;
 			Motor.previousPosition = 0;
+			Motor.setPosition = 0;				//!!!!
+			Motor.setTargetPosition = 0;		//!!!!
 			Motor.isSynchronized = 1;
 			Motor.synchronizingToEncIndex = 0;
 		}

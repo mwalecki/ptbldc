@@ -1,10 +1,12 @@
 #ifndef _MOTOR_H_
 #define _MOTOR_H_
 						
-#include "common.h"		
+#include "common.h"
 
-#define SYNCHRONIZATION_INCREMENT 	5
-#define POSITION_MAX_INCREMENT		70
+#define PRECISE_INCREMENT_UNIT	100
+
+#define SYNCHRONIZATION_INCREMENT 	(5*PRECISE_INCREMENT_UNIT)
+#define POSITION_MAX_INCREMENT		(70*PRECISE_INCREMENT_UNIT)
 
 #define TIM1PERIOD	1000
 #define MAX_PWM		TIM1PERIOD
@@ -50,6 +52,8 @@ typedef struct{
 
 inline void motorSetSynchronizationSpeed(void);
 inline void motorSpeedToPosition(void);
+inline void motorTargetPositionAndIncrementToPosition(void);
+inline void motorLimitPosition(void);
 inline void motorPositionToPWM(void);
 inline void motorPWMpositionLimit(void);
 

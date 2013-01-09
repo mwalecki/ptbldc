@@ -4,6 +4,7 @@
 #include "pid.h"
 #include "io.h"
 #include "nf/nfv2.h"
+#include <stdlib.h>
 
 extern MOTOR_St				Motor;
 extern NF_STRUCT_ComBuf 	NFComBuf;
@@ -31,10 +32,14 @@ void MOTOR_Proc(void) {
 	case NF_DrivesMode_SPEED:
 		Motor.setIncrement = NFComBuf.SetDrivesSpeed.data[0];
 		motorSpeedToPosition();
+		motorLimitPosition();
 		motorPositionToPWM();
 		break;
 	case NF_DrivesMode_POSITION:
 		Motor.setTargetPosition = NFComBuf.SetDrivesPosition.data[0];
+		Motor.setIncrement = NFComBuf.SetDrivesSpeed.data[0];
+		motorTargetPositionAndIncrementToPosition();
+		motorLimitPosition();
 		motorPositionToPWM();
 		break;
 	case NF_DrivesMode_PWM:
@@ -72,54 +77,82 @@ inline void motorSetSynchronizationSpeed(void) {
 	}
 	if(IN_ReadHOME()){
 		homeAreaChecked = 1;
-		if(Motor.setIncrement < SYNCHRONIZATION_INCREMENT)
-			Motor.setIncrement ++;
-		else if(Motor.setIncrement > SYNCHRONIZATION_INCREMENT)
-			Motor.setIncrement --;
+//		if(Motor.setIncrement < SYNCHRONIZATION_INCREMENT)
+//			Motor.setIncrement ++;
+//		else if(Motor.setIncrement > SYNCHRONIZATION_INCREMENT)
+//			Motor.setIncrement --;
+		Motor.setIncrement = SYNCHRONIZATION_INCREMENT;
 	}
 	else {
 		if(homeAreaChecked){
 			Motor.synchronizingToEncIndex = 1;
 			return;
 		}
-		if(Motor.setIncrement < - SYNCHRONIZATION_INCREMENT)
-			Motor.setIncrement ++;
-		else if(Motor.setIncrement > - SYNCHRONIZATION_INCREMENT)
-			Motor.setIncrement --;
+//		if(Motor.setIncrement < - SYNCHRONIZATION_INCREMENT)
+//			Motor.setIncrement ++;
+//		else if(Motor.setIncrement > - SYNCHRONIZATION_INCREMENT)
+//			Motor.setIncrement --;
+		Motor.setIncrement = - SYNCHRONIZATION_INCREMENT;
 	}
 }
 
 inline void motorSpeedToPosition(void) {
-	Motor.setTargetPosition = Motor.setPosition + Motor.setIncrement;
+	static int16_t setFineIncrement = 0;
+	int16_t setCoarseIncrement;
+	int16_t sgn;
+
+	setFineIncrement += Motor.setIncrement;
+	sgn = (setFineIncrement < 0)?(-1):1;
+	setCoarseIncrement = sgn * (abs(setFineIncrement) / PRECISE_INCREMENT_UNIT);
+	setFineIncrement = sgn * (abs(setFineIncrement) % PRECISE_INCREMENT_UNIT);
+
+	Motor.setPosition = Motor.setPosition + setCoarseIncrement;
 }
 
-inline void motorPositionToPWM(void) {
-	if((Motor.previousMode != NF_DrivesMode_POSITION) && (Motor.previousMode != NF_DrivesMode_SPEED)){
-		Motor.setPosition = Motor.currentPosition;
+inline void motorTargetPositionAndIncrementToPosition(void) {
+	static int16_t maxFineIncrement = 0;
+	int16_t maxCoarseIncrement;
+
+	// Calculate Position limit
+	maxFineIncrement += abs(Motor.setIncrement);
+	maxCoarseIncrement = maxFineIncrement / PRECISE_INCREMENT_UNIT;
+	maxFineIncrement = maxFineIncrement % PRECISE_INCREMENT_UNIT;
+
+	// Limit Position increment
+	if(Motor.setTargetPosition > Motor.setPosition + maxCoarseIncrement)
+		Motor.setPosition += maxCoarseIncrement;
+	else if(Motor.setTargetPosition < Motor.setPosition - maxCoarseIncrement)
+		Motor.setPosition -= maxCoarseIncrement;
+	else
+		Motor.setPosition = Motor.setTargetPosition;
+}
+
+inline void motorLimitPosition(void) {
+	if(Motor.setPosition < NFComBuf.SetDrivesMinPosition.data[0]) {
+		Motor.positionLimit = 1;
+		Motor.setPosition = NFComBuf.SetDrivesMinPosition.data[0];
 	}
-	// Limit Position value
-	if(Motor.mode != NF_DrivesMode_SYNC_POS0) {
-		if(Motor.setTargetPosition < NFComBuf.SetDrivesMinPosition.data[0]) {
-			Motor.positionLimit = 1;
-			Motor.setTargetPosition = NFComBuf.SetDrivesMinPosition.data[0];
-		}
-		else if(Motor.setTargetPosition > NFComBuf.SetDrivesMaxPosition.data[0]) {
-			Motor.positionLimit = 1;
-			Motor.setTargetPosition = NFComBuf.SetDrivesMaxPosition.data[0];
-		}
-		else
-			Motor.positionLimit = 0;
+	else if(Motor.setPosition > NFComBuf.SetDrivesMaxPosition.data[0]) {
+		Motor.positionLimit = 1;
+		Motor.setPosition = NFComBuf.SetDrivesMaxPosition.data[0];
 	}
 	else
 		Motor.positionLimit = 0;
 
-	// Limit Position increment
-	if(Motor.setTargetPosition > Motor.setPosition + POSITION_MAX_INCREMENT)
-		Motor.setPosition += POSITION_MAX_INCREMENT;
-	else if(Motor.setTargetPosition < Motor.setPosition - POSITION_MAX_INCREMENT)
-		Motor.setPosition -= POSITION_MAX_INCREMENT;
-	else
-		Motor.setPosition = Motor.setTargetPosition;
+	if(Motor.setTargetPosition < NFComBuf.SetDrivesMinPosition.data[0]) {
+		Motor.setTargetPosition = NFComBuf.SetDrivesMinPosition.data[0];
+	}
+	else if(Motor.setTargetPosition > NFComBuf.SetDrivesMaxPosition.data[0]) {
+		Motor.setTargetPosition = NFComBuf.SetDrivesMaxPosition.data[0];
+	}
+}
+
+inline void motorPositionToPWM(void) {
+	if((Motor.previousMode != NF_DrivesMode_POSITION)
+			&& (Motor.previousMode != NF_DrivesMode_SPEED)
+			&& (Motor.previousMode != NF_DrivesMode_SYNC_POS0)){
+		Motor.setPosition = Motor.currentPosition;
+	}
 
 	// #### PID input data preparation
 	PID[0].referenceValue	= Motor.setPosition;
