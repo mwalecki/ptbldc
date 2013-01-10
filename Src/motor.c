@@ -97,9 +97,9 @@ inline void motorSetSynchronizationSpeed(void) {
 }
 
 inline void motorSpeedToPosition(void) {
-	static int16_t setFineIncrement = 0;
-	int16_t setCoarseIncrement;
-	int16_t sgn;
+	static int32_t setFineIncrement = 0;
+	int32_t setCoarseIncrement;
+	int32_t sgn;
 
 	setFineIncrement += Motor.setIncrement;
 	sgn = (setFineIncrement < 0)?(-1):1;
@@ -110,8 +110,8 @@ inline void motorSpeedToPosition(void) {
 }
 
 inline void motorTargetPositionAndIncrementToPosition(void) {
-	static int16_t maxFineIncrement = 0;
-	int16_t maxCoarseIncrement;
+	static int32_t maxFineIncrement = 0;
+	int32_t maxCoarseIncrement;
 
 	// Calculate Position limit
 	maxFineIncrement += abs(Motor.setIncrement);

@@ -3,7 +3,8 @@
 						
 #include "common.h"
 
-#define PRECISE_INCREMENT_UNIT	100
+#define PRECISE_INCREMENT_UNIT	1000
+// Speed command sets increment in [motors/s] = [0.001motors/(regulator period)]
 
 #define SYNCHRONIZATION_INCREMENT 	(5*PRECISE_INCREMENT_UNIT)
 #define POSITION_MAX_INCREMENT		(70*PRECISE_INCREMENT_UNIT)
@@ -34,10 +35,10 @@ typedef struct{
 	uint8_t previousMode;
 	int16_t setPWM;
 	int16_t setCurrent;
-	int16_t setIncrement;
+	int32_t setIncrement;
 	int32_t setTargetPosition;
 	int32_t setPosition;
-	int16_t currentIncrement;
+	int32_t currentIncrement;
 	int32_t previousPosition;
 	int32_t currentPosition;
 	uint8_t synchronizingToEncIndex;
