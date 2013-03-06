@@ -46,6 +46,7 @@ typedef struct{
 	uint8_t positionLimit;
 	uint8_t limitSwitchUp;
 	uint8_t limitSwitchDown;
+	uint8_t switchHome;
 	uint8_t enableSignal;
 } MOTOR_St;
 

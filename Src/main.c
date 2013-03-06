@@ -195,11 +195,11 @@ void SystemMonitor(void){
 
 	if(NFComBuf.myAddress != oldAddress){
 		switch(NFComBuf.myAddress){
-			case 0: LED_Set(LED_DIGIT, LED_sym0, 0); break;
-			case 1: LED_Set(LED_DIGIT, LED_sym1, 0); break;
-			case 2: LED_Set(LED_DIGIT, LED_sym2, 0); break;
-			case 3: LED_Set(LED_DIGIT, LED_sym3, 0); break;
-			case 4: LED_Set(LED_DIGIT, LED_sym4, 0); break;
+			case (NF_AddressBase+0): LED_Set(LED_DIGIT, LED_sym0, 0); break;
+			case (NF_AddressBase+1): LED_Set(LED_DIGIT, LED_sym1, 0); break;
+			case (NF_AddressBase+2): LED_Set(LED_DIGIT, LED_sym2, 0); break;
+			case (NF_AddressBase+3): LED_Set(LED_DIGIT, LED_sym3, 0); break;
+			case (NF_AddressBase+4): LED_Set(LED_DIGIT, LED_sym4, 0); break;
 		}
 		oldAddress = NFComBuf.myAddress;
 		displayCnt = DISPLAY_LAG;

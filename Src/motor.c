@@ -19,6 +19,9 @@ void MOTOR_Proc(void) {
 	Motor.currentPosition = ENCODER1_Position();
 	Motor.currentIncrement = Motor.currentPosition - Motor.previousPosition;
 	Motor.enableSignal = (IN_ReadENABLE() == 0) ? 1 : 0;
+	Motor.limitSwitchUp = (IN_ReadLIMITPOS() == 0) ? 1 : 0;
+	Motor.limitSwitchDown = (IN_ReadLIMITNEG() == 0) ? 1 : 0;
+	Motor.switchHome = (IN_ReadHOME() == 0) ? 1 : 0;
 
 	Motor.previousMode = Motor.mode;
 	Motor.mode = NFComBuf.SetDrivesMode.data[0];
@@ -60,7 +63,9 @@ void MOTOR_Proc(void) {
 									| 	(Motor.positionLimit ? NF_DrivesStatus_PositionLimit : 0)
 									| 	(Motor.enableSignal ? 0 : NF_DrivesStatus_Error)
 									| 	((Motor.mode == NF_DrivesMode_ERROR) ? NF_DrivesStatus_Error : 0);
-
+	NFComBuf.ReadDigitalInputs.data[0] = (Motor.limitSwitchUp ? (1<<0) : 0)
+									|	(Motor.limitSwitchDown ? (1<<1) : 0)
+									|	(Motor.switchHome ? (1<<2) : 0);
 }
 
 inline void motorSetSynchronizationSpeed(void) {
@@ -128,6 +133,11 @@ inline void motorTargetPositionAndIncrementToPosition(void) {
 }
 
 inline void motorLimitPosition(void) {
+	if(NFComBuf.SetDrivesMinPosition.data[0] == NFComBuf.SetDrivesMaxPosition.data[0]){
+		Motor.positionLimit = 0;
+		return;
+	}
+
 	if(Motor.setPosition < NFComBuf.SetDrivesMinPosition.data[0]) {
 		Motor.positionLimit = 1;
 		Motor.setPosition = NFComBuf.SetDrivesMinPosition.data[0];
@@ -189,6 +199,11 @@ inline void motorPositionToPWM(void) {
 }
 
 inline void motorPWMpositionLimit(void) {
+	if(NFComBuf.SetDrivesMinPosition.data[0] == NFComBuf.SetDrivesMaxPosition.data[0]){
+		Motor.positionLimit = 0;
+		return;
+	}
+
 	if(Motor.currentPosition < NFComBuf.SetDrivesMinPosition.data[0]) {
 		Motor.positionLimit = 1;
 		if(Motor.setPWM < 0)
