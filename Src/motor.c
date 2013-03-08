@@ -34,6 +34,7 @@ void MOTOR_Proc(void) {
 		break;
 	case NF_DrivesMode_SPEED:
 		Motor.setIncrement = NFComBuf.SetDrivesSpeed.data[0];
+		motorLimitSpeed();
 		motorSpeedToPosition();
 		motorLimitPosition();
 		motorPositionToPWM();
@@ -130,6 +131,17 @@ inline void motorTargetPositionAndIncrementToPosition(void) {
 		Motor.setPosition -= maxCoarseIncrement;
 	else
 		Motor.setPosition = Motor.setTargetPosition;
+}
+
+inline void motorLimitSpeed(void) {
+//	if(Motor.setIncrement > NFComBuf.SetDrivesMaxSpeed.data[0])
+//		Motor.setIncrement = NFComBuf.SetDrivesMaxSpeed.data[0];
+//	else if(Motor.setIncrement < - NFComBuf.SetDrivesMaxSpeed.data[0])
+//		Motor.setIncrement = - NFComBuf.SetDrivesMaxSpeed.data[0];
+	if(Motor.setIncrement > MAX_SPEED)
+		Motor.setIncrement = MAX_SPEED;
+	else if(Motor.setIncrement < - MAX_SPEED)
+		Motor.setIncrement = - MAX_SPEED;
 }
 
 inline void motorLimitPosition(void) {

@@ -3,6 +3,8 @@
 						
 #include "common.h"
 
+#define MAX_SPEED 250000
+
 #define PRECISE_INCREMENT_UNIT	1000
 // Speed command sets increment in [motors/s] = [0.001motors/(regulator period)]
 
@@ -55,6 +57,7 @@ typedef struct{
 inline void motorSetSynchronizationSpeed(void);
 inline void motorSpeedToPosition(void);
 inline void motorTargetPositionAndIncrementToPosition(void);
+inline void motorLimitSpeed(void);
 inline void motorLimitPosition(void);
 inline void motorPositionToPWM(void);
 inline void motorPWMpositionLimit(void);

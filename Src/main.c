@@ -16,7 +16,7 @@
 #include "pid.h"
 #include "myscpi/myscpi.h"
 #include "nf/nfv2.h"
-
+#include "circbuf.h"
 
 
 //##                                      #### ######## ################ GLOBALS	 
@@ -28,6 +28,7 @@ uint16_t 			serialNumber;
 NF_STRUCT_ComBuf 	NFComBuf;
 PID_St				PID[3];
 MOTOR_St			Motor;
+CircularBuffer		cbUsart1Received;
 
 //##                                      #### ######## ################ PROTOTYPES
 void SystemMonitor(void);
@@ -38,6 +39,11 @@ int main(void)
 	uint8_t usartBytesToSend, usbBytesToSend1, usbBytesToSend2, usbLastByteReceived;
 	uint8_t commArray[10];
 	uint8_t commCnt;
+	uint8_t newByte;
+	uint8_t u1commArray[10];
+	uint8_t u1commCnt;
+	uint8_t u1BytesToSend;
+	uint8_t u1ByteReceived;
 	
 	// First init System Clock
 	RCC_Configuration();	// Init system clock
@@ -137,6 +143,22 @@ int main(void)
 			}
 			NFComBuf.dataReceived = 0;
 		}
+
+		while(cbIsEmpty(&cbUsart1Received) == 0){
+			cbRead(&cbUsart1Received, &newByte);
+			Usart1.rxBuf[Usart1.rxPt] = newByte;
+
+					if(NF_Interpreter(&NFComBuf, (uint8_t*) Usart1.rxBuf, (uint8_t*) &Usart1.rxPt, u1commArray, &u1commCnt) > 0){
+						NFComBuf.dataReceived = 1;
+						if(u1commCnt > 0){
+							u1BytesToSend = NF_MakeCommandFrame(&NFComBuf, (uint8_t*)Usart1.txBuf, (const uint8_t*)u1commArray, u1commCnt, NFComBuf.myAddress);
+							if(u1BytesToSend > 0){
+								USART1_SendNBytes((uint8_t*)Usart1.txBuf, u1BytesToSend);
+							}
+						}
+					}
+		}
+
 
 		if(USB_RxBufNotEmpty()) {
 			while(USB_RxBufNotEmpty()){

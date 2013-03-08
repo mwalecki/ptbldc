@@ -1,11 +1,16 @@
 #include "usart1.h"
 #include "systick.h"
 #include "nf/nfv2.h"
+#include "circbuf.h"
 								 
 extern SERVO_St		Servo;
 extern USART_St		Usart1;
 extern STDOWNCNT_St	STDownCnt[ST_Downcounters];	
 extern NF_STRUCT_ComBuf 	NFComBuf;	 
+
+
+uint8_t cbUsart1RxData[256];
+extern CircularBuffer	cbUsart1Received;
 
 //vu8 crcbuf[20];
 //crc  crcTable[256];
@@ -14,6 +19,9 @@ void USART1_Config(void){
 	GPIO_InitTypeDef GPIO_InitStructure;  
     USART_ClockInitTypeDef  USART_ClockInitStructure;
 	USART_InitTypeDef USART_InitStructure;
+
+	// USB Received Data Circular Buffer Init
+	cbInit(&cbUsart1Received, cbUsart1RxData, 256);
 
 	// IO Clocks Enable
 	RCC_APB2PeriphClockCmd(TX_APB2 | RX_APB2 | TXEN_APB2, ENABLE);
@@ -118,10 +126,16 @@ void USART1_IRQHandler(void){
 	uint8_t u1commArray[10];
 	uint8_t u1commCnt;
 	uint8_t u1BytesToSend;
+	uint8_t u1ByteReceived;
 
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET){	 
 		// Clear the USARTx Receive interrupt
 		USART_ClearITPendingBit(USART1, USART_IT_RXNE);
+
+		u1ByteReceived = USART_ReceiveData(USART1);
+		cbWrite(&cbUsart1Received, &u1ByteReceived);
+
+		/*
 		// Read one byte from the receive data register
 		Usart1.rxBuf[Usart1.rxPt] = USART_ReceiveData(USART1);
 		
@@ -133,7 +147,7 @@ void USART1_IRQHandler(void){
 					USART1_SendNBytes((uint8_t*)Usart1.txBuf, u1BytesToSend);
 				}
 			}
-		}
+		}*/
 	}
 }
 

@@ -50,18 +50,9 @@
 #define EEADDR_DRV1_MIN_H 39
 #define EEADDR_DRV1_MAX_L 40
 #define EEADDR_DRV1_MAX_H 41
-#define EEADDR_DRV2_MIN_L 42
-#define EEADDR_DRV2_MIN_H 43
-#define EEADDR_DRV2_MAX_L 44
-#define EEADDR_DRV2_MAX_H 45
-#define EEADDR_DRV3_MIN_L 46
-#define EEADDR_DRV3_MIN_H 47
-#define EEADDR_DRV3_MAX_L 48
-#define EEADDR_DRV3_MAX_H 49
-#define EEADDR_DRV4_MIN_L 50
-#define EEADDR_DRV4_MIN_H 51
-#define EEADDR_DRV4_MAX_L 52
-#define EEADDR_DRV4_MAX_H 53
+
+#define EEADDR_DRV1_MAXSPEED_L 42
+#define EEADDR_DRV1_MAXSPEED_H 43
 
 void eebackup_Recover(void);	
 void eebackup_SaveAll(void);

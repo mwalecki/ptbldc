@@ -128,6 +128,17 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 	_ENDGROUP
 
 	else
+	_GROUP(":SP")
+		_GET_SETANDDO_MEMBER(NFComBuf.SetDrivesMaxSpeed.data[0], ":MAX")
+			NFComBuf.SetDrivesMaxSpeed.updated = 1;
+			NFComBuf.dataReceived = 1;
+		_END_GET_SETANDDO_MEMBER
+		else
+		_IF_MEMBER_THEN("?")
+			_PRINT_INT_RESPONSE(Motor.currentIncrement)
+	_ENDGROUP
+
+	else
 	_GROUP(":PID1")
 		_GET_SETANDDO_MEMBER(NFComBuf.SetPositionRegulator.data[0].p, ":P")
 			NFComBuf.SetPositionRegulator.updated = 1;
