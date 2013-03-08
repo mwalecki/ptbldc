@@ -1,4 +1,5 @@
 #include "interrupts.h"
+#include "adc.h"
 
 void NVIC_Configuration(void)
 {						   
@@ -13,30 +14,49 @@ NVIC_InitTypeDef NVIC_InitStructure;
 #endif
 	
 	// Configure the NVIC Preemption Priority Bits
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
 	
 	// Enable the USART1 Interrupt
 	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-	
-	// Enable the USART2 Interrupt
-	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
+
+	#ifdef ADC_DMA_TransferCompleteInterrupt
+	/* Enable DMA1 channel1 IRQ Channel */
+	NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel1_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 4;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+	#endif //ADC_DMA_TransferCompleteInterrupt
+
+	/* Enable EXTI0 Interrupt - Encoder Index Signal */
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-	
-	// Enable the USART3 Interrupt
-	NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
+
+	// we use preemption interrupts here,  BLDC Bridge switching and
+	// Hall has highest priority
+	NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-									
-	// Enable the TIM2 Interrupt
-	NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn; 
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00; 
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1; 
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; 
-	NVIC_Init(&NVIC_InitStructure); 
+
+	NVIC_InitStructure.NVIC_IRQChannel = SysTick_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+
+	// Enable USB Interrupt
+	NVIC_InitStructure.NVIC_IRQChannel = USB_LP_CAN1_RX0_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
 }

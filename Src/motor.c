@@ -471,8 +471,6 @@ void BLDCMotorPrepareCommutation(void)
 		pwm = - Motor.setPWM;
 	}
 
-	// this is only for motor direction forward
-
 	BH1 = bldcBridgeState[hallpos][0];
 	BL1 = bldcBridgeState[hallpos][1];
 

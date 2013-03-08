@@ -3,6 +3,9 @@
 
 #include "common.h"
 
+#define ADC1_DR_Address    ((uint32_t)0x4001244C)
+#define ADC_DMA_TransferCompleteInterrupt
+
 #define ADC_Channels 9
 #define ADC_DigitalBytes ((ADC_Channels-1)/8 + 1)
 

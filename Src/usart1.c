@@ -14,7 +14,6 @@ void USART1_Config(void){
 	GPIO_InitTypeDef GPIO_InitStructure;  
     USART_ClockInitTypeDef  USART_ClockInitStructure;
 	USART_InitTypeDef USART_InitStructure;
-	NVIC_InitTypeDef NVIC_InitStructure;
 
 	// IO Clocks Enable
 	RCC_APB2PeriphClockCmd(TX_APB2 | RX_APB2 | TXEN_APB2, ENABLE);
@@ -63,10 +62,7 @@ void USART1_Config(void){
 	// Enable USARTx
 	USART_Cmd(USART1, ENABLE);
 
-	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
+	// USART Interrupt set in interrupts.c
 }
 
 void USART1_SendString(char* buf)

@@ -140,6 +140,9 @@ void USB_Interrupts_Config(void)
 {
   NVIC_InitTypeDef NVIC_InitStructure;
 
+  // Interrupts settings in interrupts.c
+  return;
+
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
 
 #if defined(STM32L1XX_MD) || defined(STM32L1XX_HD) || defined(STM32L1XX_MD_PLUS) 
@@ -164,11 +167,6 @@ void USB_Interrupts_Config(void)
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
 #endif /* STM32L1XX_XD */
-
-//  /* Enable USART Interrupt */
-//  NVIC_InitStructure.NVIC_IRQChannel = EVAL_COM1_IRQn;
-//  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-//  NVIC_Init(&NVIC_InitStructure);
 }
 
 /*******************************************************************************

@@ -2,7 +2,6 @@
 
 void HALL_Config(void) {
 	//Configuration Structures
-	NVIC_InitTypeDef NVIC_InitStructure;
 	GPIO_InitTypeDef GPIO_InitStructure;
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 	TIM_OCInitTypeDef  TIM_OCInitStructure;
@@ -98,13 +97,8 @@ void HALL_Config(void) {
 	//TIM_ClearFlag(TIM4, TIM_FLAG_Update);
 	//TIM_ITConfig(TIM4, TIM_IT_Update, DISABLE);
 	 
-	// we use preemption interrupts here,  BLDC Bridge switching and
-	// Hall has highest priority 
-	NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00; 
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1; 
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; 
-	NVIC_Init(&NVIC_InitStructure); 
+	// Interrupts for BLDC Bridge switching and Hall have highest priority
+	// Set in interrupts.c
 	 
 	  // -------------------
 	// HallSensor is now configured, if BLDC Timer is also configured
