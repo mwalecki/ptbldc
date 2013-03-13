@@ -79,4 +79,10 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<variableList>
+		<variable>
+			<name>CODESOURCERY</name>
+			<value>file:/home/wacek/CodeSourcery/Sourcery_CodeBench_Lite_for_ARM_EABI/bin</value>
+		</variable>
+	</variableList>
 </projectDescription>
