@@ -9,7 +9,7 @@
 #define ST_Period1			10
 #define ST_MotorProc	2
 #define ST_Period2			10
-#define ST_UsartCmdWD	3
+#define ST_CommandWD	3
 #define ST_Period3			5000
 #define ST_UsartTxDelay	4
 #define ST_Period4			50

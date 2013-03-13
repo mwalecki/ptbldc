@@ -83,19 +83,10 @@ int main(void)
 
 	//#### MAIN LOOP ####//
 	while (1){
-		if(STDownCnt[ST_UsartTxDelay].tick){
-			if(Usart1.txDataReady){
-				USART1_SendString((char*) Usart1.txBuf);
-				Usart1.txDataReady = 0;
-			}
-			STDownCnt[ST_UsartTxDelay].tick = 0;
-		}	
-		if(Usart1.rxDataReady!=0)
-		{
-			strncpy((char*)Usart1.tmpBuf,(const char*)Usart1.rxBuf, 15);
-			Usart1.rxDataReady=0;
-			ST_Reset(ST_UsartCmdWD);// USART Command Watchdog Reset
-		}		   									
+		if(STDownCnt[ST_CommandWD].tick){
+			NFComBuf.SetDrivesMode.data[0] = NF_DrivesMode_ERROR;
+			STDownCnt[ST_CommandWD].tick = 0;
+		}
 		//#### #### SYSTICK EVENT FOR STATUS LED 
 		if(STDownCnt[ST_StatusLed].tick){	
 			STDownCnt[ST_StatusLed].tick = 0;
@@ -116,14 +107,22 @@ int main(void)
 			}
 			if(NFComBuf.SetDrivesMode.updated){
 				// MOTORS_Proc() gets these values directly from NFComBuf.
+				ST_Reset(ST_CommandWD);
 				NFComBuf.SetDrivesMode.updated = 0;
 			}
 			if(NFComBuf.SetDrivesPWM.updated){
 				// MOTORS_Proc() gets these values directly from NFComBuf.
+				ST_Reset(ST_CommandWD);
 				NFComBuf.SetDrivesPWM.updated = 0;
+			}
+			if(NFComBuf.SetDrivesSpeed.updated){
+				// MOTORS_Proc() gets these values directly from NFComBuf.
+				ST_Reset(ST_CommandWD);
+				NFComBuf.SetDrivesSpeed.updated = 0;
 			}
 			if(NFComBuf.SetDrivesPosition.updated){
 				// MOTORS_Proc() gets these values directly from NFComBuf.
+				ST_Reset(ST_CommandWD);
 				NFComBuf.SetDrivesPosition.updated = 0;
 			}
 			if(NFComBuf.SetDrivesMinPosition.updated){
