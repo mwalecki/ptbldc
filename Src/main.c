@@ -66,7 +66,8 @@ int main(void)
 //	PID_LoadDefaults(&PID[2]);
 	ADCwithDMA_Config();
 	NVIC_Configuration();
-	USB_Config();
+//	USB_Config();
+	CAN_Config();
 	NFv2_CrcInit();
 	PID_Init(&PID[0]);
 //	PID_Init(&PID[1]);
@@ -91,8 +92,9 @@ int main(void)
 		if(STDownCnt[ST_StatusLed].tick){	
 			STDownCnt[ST_StatusLed].tick = 0;
 			LED_Proc();
-			USART1_SendString("Test\r\n");
-		}	
+			//USART1_SendString("Test\r\n");
+		}
+
 		if(STDownCnt[ST_Monitor].tick){
 			STDownCnt[ST_Monitor].tick = 0;
 			SystemMonitor();
@@ -158,7 +160,7 @@ int main(void)
 					}
 		}
 
-
+/*
 		if(USB_RxBufNotEmpty()) {
 			while(USB_RxBufNotEmpty()){
 				usbLastByteReceived = USB_ReadOneByte();
@@ -197,7 +199,7 @@ int main(void)
 					USART1_SendNBytes((uint8_t*)Usart1.txBuf, usartBytesToSend);
 				}
 			}
-	    }
+	    } */
 	} //####  END main while LOOP ####//
 }
 

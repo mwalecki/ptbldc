@@ -77,24 +77,24 @@ void PID_Init(PID_St *pid)
  */
 int16_t PID_Controller(PID_St *pid_st)
 {
-  int16_t error, p_term, d_term;
+  int16_t err, p_term, d_term;
   int32_t i_term, ret, temp;
 
-  error = pid_st->referenceValue - pid_st->measurementValue;
+  err = pid_st->referenceValue - pid_st->measurementValue;
 
   // Calculate Pterm and limit error overflow
-  if (error > pid_st->maxError){
+  if (err > pid_st->maxError){
     p_term = MAX_INT;
   }
-  else if (error < -pid_st->maxError){
+  else if (err < -pid_st->maxError){
     p_term = -MAX_INT;
   }
   else{
-    p_term = pid_st->P_Factor * error;
+    p_term = pid_st->P_Factor * err;
   }
 
   // Calculate Iterm and limit integral runaway
-  temp = pid_st->sumError + error;
+  temp = pid_st->sumError + err;
   if(temp > pid_st->maxSumError){
     i_term = MAX_I_TERM;
     pid_st->sumError = pid_st->maxSumError;

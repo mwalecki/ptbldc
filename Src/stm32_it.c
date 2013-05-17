@@ -165,10 +165,10 @@ void PendSV_Handler(void)
 * Output         : None
 * Return         : None
 *******************************************************************************/
-void USB_LP_CAN1_RX0_IRQHandler(void)
-{
-  USB_Istr();
-}
+//void USB_LP_CAN1_RX0_IRQHandler(void)
+//{
+//  USB_Istr();
+//}
 /*******************************************************************************
 * Function Name  : EVAL_COM1_IRQHandler
 * Description    : This function handles EVAL_COM1 global interrupt request.
