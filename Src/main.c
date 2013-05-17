@@ -84,7 +84,18 @@ int main(void)
 	//#### MAIN LOOP ####//
 	while (1){
 		if(STDownCnt[ST_CommandWD].tick){
-			NFComBuf.SetDrivesMode.data[0] = NF_DrivesMode_ERROR;
+			if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_SPEED)
+				NFComBuf.SetDrivesSpeed.data[0] = 0;
+			if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_PWM)
+				NFComBuf.SetDrivesPWM.data[0] = 0;
+			if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_SYNC_PWM0)
+				NFComBuf.SetDrivesPWM.data[0] = 0;
+			if(NFComBuf.SetDrivesMode.data[1] == NF_DrivesMode_SPEED)
+				NFComBuf.SetDrivesSpeed.data[1] = 0;
+			if(NFComBuf.SetDrivesMode.data[1] == NF_DrivesMode_PWM)
+				NFComBuf.SetDrivesPWM.data[1] = 0;
+			if(NFComBuf.SetDrivesMode.data[1] == NF_DrivesMode_SYNC_PWM0)
+				NFComBuf.SetDrivesPWM.data[1] = 0;
 			STDownCnt[ST_CommandWD].tick = 0;
 		}
 		//#### #### SYSTICK EVENT FOR STATUS LED 
@@ -150,6 +161,9 @@ int main(void)
 					if(NF_Interpreter(&NFComBuf, (uint8_t*) Usart1.rxBuf, (uint8_t*) &Usart1.rxPt, u1commArray, &u1commCnt) > 0){
 						NFComBuf.dataReceived = 1;
 						if(u1commCnt > 0){
+							//##########################################
+							//Motor.currentPosition = ENCODER1_Position();
+							//##########################################
 							u1BytesToSend = NF_MakeCommandFrame(&NFComBuf, (uint8_t*)Usart1.txBuf, (const uint8_t*)u1commArray, u1commCnt, NFComBuf.myAddress);
 							if(u1BytesToSend > 0){
 								USART1_SendNBytes((uint8_t*)Usart1.txBuf, u1BytesToSend);
@@ -176,6 +190,9 @@ int main(void)
 				if(NF_Interpreter(&NFComBuf, (uint8_t*)USBBufs2.rxBuf, (uint8_t*)&USBBufs2.rxPt, commArray, &commCnt) > 0){
 					NFComBuf.dataReceived = 1;
 					if(commCnt > 0){
+						//##########################################
+						//Motor.currentPosition = ENCODER1_Position();
+						//##########################################
 						usbBytesToSend2 = NF_MakeCommandFrame(&NFComBuf, (uint8_t*)USBBufs2.txBuf, (const uint8_t*)commArray, commCnt, NFComBuf.myAddress);
 						USB_SendNBytes((uint8_t*)USBBufs2.txBuf, usbBytesToSend2);
 					}

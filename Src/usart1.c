@@ -128,9 +128,7 @@ void USART1_IRQHandler(void){
 	uint8_t u1BytesToSend;
 	uint8_t u1ByteReceived;
 
-	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET){	 
-		// Clear the USARTx Receive interrupt
-		USART_ClearITPendingBit(USART1, USART_IT_RXNE);
+	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET){
 
 		u1ByteReceived = USART_ReceiveData(USART1);
 		cbWrite(&cbUsart1Received, &u1ByteReceived);
@@ -148,6 +146,9 @@ void USART1_IRQHandler(void){
 				}
 			}
 		}*/
+
+		// Clear the USARTx Receive interrupt
+		//USART_ClearITPendingBit(USART1, USART_IT_RXNE);
 	}
 }
 
