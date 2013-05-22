@@ -20,7 +20,7 @@ void RCC_Configuration(void)
     /* PCLK2 = HCLK */
     RCC_PCLK2Config(RCC_HCLK_Div1);
     /* PCLK1 = HCLK/2 */
-    RCC_PCLK1Config(RCC_HCLK_Div4);
+    RCC_PCLK1Config(RCC_HCLK_Div2);
     /* PLLCLK = 8MHz * 9 = 72 MHz */
     RCC_PLLConfig(RCC_PLLSource_HSE_Div2, RCC_PLLMul_9);
     /* Enable PLL */ 

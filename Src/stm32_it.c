@@ -33,6 +33,8 @@
 #include "usb_lib.h"
 #include "usb_istr.h"
 
+extern uint8_t CANMode;
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -167,7 +169,11 @@ void PendSV_Handler(void)
 *******************************************************************************/
 void USB_LP_CAN1_RX0_IRQHandler(void)
 {
-  USB_Istr();
+	if(CANMode) {
+		CAN_Istr();
+	} else {
+		USB_Istr();
+	}
 }
 /*******************************************************************************
 * Function Name  : EVAL_COM1_IRQHandler

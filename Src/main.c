@@ -29,7 +29,7 @@ NF_STRUCT_ComBuf 	NFComBuf;
 PID_St				PID[3];
 MOTOR_St			Motor;
 CircularBuffer		cbUsart1Received;
-
+uint8_t				CANMode;
 //##                                      #### ######## ################ PROTOTYPES
 void SystemMonitor(void);
 
@@ -65,17 +65,28 @@ int main(void)
 //	PID_LoadDefaults(&PID[1]);
 //	PID_LoadDefaults(&PID[2]);
 	ADCwithDMA_Config();
+	CANMode = IN_ReadMode();
 	NVIC_Configuration();
-	USB_Config();
 	NFv2_CrcInit();
 	PID_Init(&PID[0]);
 //	PID_Init(&PID[1]);
 //	PID_Init(&PID[2]);
-	
+
 	// Execute NFv2_Config() after init of all peripherals. 
 	// NFv2_Config() may set some data in NFComBuf to current values
 	// read from already initiated peripherals.
 	NFv2_Config(&NFComBuf, NF_AddressBase + IN_ReadAddress());
+	if(CANMode) {
+		CAN_Config();
+	} else {
+		USB_Config();
+	}
+
+	//if(CANMode) {
+	//	CAN_Config();
+	//} else {
+
+	//}
 
 	LED_Set(LED_ALL, 		//mask
 			LED_symMINUS,	//newState
@@ -102,8 +113,9 @@ int main(void)
 		if(STDownCnt[ST_StatusLed].tick){	
 			STDownCnt[ST_StatusLed].tick = 0;
 			LED_Proc();
-			USART1_SendString("Test\r\n");
-		}	
+			//USART1_SendString("Test\r\n");
+		}
+
 		if(STDownCnt[ST_Monitor].tick){
 			STDownCnt[ST_Monitor].tick = 0;
 			SystemMonitor();
