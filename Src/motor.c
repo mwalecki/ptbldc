@@ -338,6 +338,10 @@ void MOTOR_Config(void) {
 	TIM_OC2Init(TIM1, &TIM_OCInitStructure);
 	TIM_OC3Init(TIM1, &TIM_OCInitStructure);
 
+	TIM_OCInitStructure.TIM_Pulse = 1000; // Just before update event, fire CC4 interrupt to preload PWM values
+
+	TIM_OC4Init(TIM1, &TIM_OCInitStructure);
+
 	// activate preloading the CCR register
 	TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
 	TIM_OC2PreloadConfig(TIM1, TIM_OCPreload_Enable);
@@ -366,60 +370,10 @@ void MOTOR_Config(void) {
 	// preload ARR register
 	TIM_CCPreloadControl(TIM1, ENABLE);
 
-	// activate COM (Commutation) Event from Slave (HallSensor timer)
-	// through TRGI
-	TIM_SelectCOM(TIM1, ENABLE);
-
-  // Internal connection from Hall/Enc Timer to Motor Timer
-  // eg. TIM1 (BLDC Motor Timer) is Slave of TIM3 (Hall Timer)
-  // Internal connection from Hall/Enc Timer to Motor Timer
-
-  // Choose carefully from the following possible combination
-  // check programmers reference manual
-  // TIM_SelectInputTrigger(TIM1, TIM_TS_ITR0);
-  // MotorTimer = TIM1, HallTimer = TIM5
-  // TIM_SelectInputTrigger(TIM1, TIM_TS_ITR1);
-  // MotorTimer = TIM1, HallTimer = TIM2
-
-	//TIM_SelectInputTrigger(TIM1, TIM_TS_ITR2);
-	// MotorTimer = TIM1, HallTimer = TIM3
-
-	TIM_SelectInputTrigger(TIM1, TIM_TS_ITR3);
-	// MotorTimer = TIM1, HallTimer = TIM4
-
-  // TIM_SelectInputTrigger(TIM8, TIM_TS_ITR0);
-  // MotorTimer = TIM8, HallTimer = TIM1
-  // TIM_SelectInputTrigger(TIM8, TIM_TS_ITR1);
-  // MotorTimer = TIM8, HallTimer = TIM2
-  // TIM_SelectInputTrigger(TIM8, TIM_TS_ITR2);
-  // MotorTimer = TIM8, HallTimer = TIM4
-  // TIM_SelectInputTrigger(TIM8, TIM_TS_ITR3);
-  // MotorTimer = TIM8, HallTimer = TIM5
- 
-//	// Enable interrupt, motor commutation has high piority and has
-//	// a higher subpriority then the hall sensor
-//	NVIC_InitStructure.NVIC_IRQChannel = TIM1_TRG_COM_IRQn;
-//	// highest priority
-//	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
-//	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-//	// highest priority
-//	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-//	NVIC_Init(&NVIC_InitStructure);
- 
-  // Interrupt for hardwired EmergencyStop (if needed)
-  // Timer 1 Motor Emergency Break Input
-  // NVIC_InitStructure.NVIC_IRQChannel = TIM1_BRK_IRQn;
-  // NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
-  // NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-  // NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  // NVIC_Init(&NVIC_InitStructure);
- 
-  // --------- activate the bldc bridge ctrl. ----------
-  // in a project this will be done late after complete
-  // configuration of other peripherie
- 
-//	// enable COM (commutation) IRQ
-//	TIM_ITConfig(TIM1, TIM_IT_COM, ENABLE);
+	// Clear update interrupt bit
+	TIM_ClearITPendingBit(TIM1,TIM_IT_Update);
+	// Enable capture/compare interrupt
+	TIM_ITConfig(TIM1,TIM_IT_CC4,ENABLE);
  
 	// enable motor timer
 	TIM_Cmd(TIM1, ENABLE);
@@ -433,24 +387,6 @@ void MOTOR_Config(void) {
 	Motor.setPosition = 0;
 	Motor.setTargetPosition = 0;
 	Motor.setCurrent = 0;
-}
- 
-// enable the connection between HallTimer and MotorTimer
-void enableHallCommutateSignal() {
-   TIM_SelectCOM(TIM1, ENABLE);
-}
- 
-// disable the connection between HallTimer and MotorTimer
-void disableHallCommutateSignal() {
-   TIM_SelectCOM(TIM1, DISABLE);
-}
- 
-// This function handles motor timer trigger and commutation interrupts
-// can be used for calculation...
-void TIM1_TRG_COM_IRQHandler(void)
-{
-  TIM_ClearITPendingBit(TIM1, TIM_IT_COM);
-  // commutationCount++;
 }
  
 /* This is called from HALL timer interrupt handler
