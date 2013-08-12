@@ -28,6 +28,7 @@ uint16_t 			serialNumber;
 NF_STRUCT_ComBuf 	NFComBuf;
 PID_St				PID[3];
 MOTOR_St			Motor;
+COMMUTATOR_St			Commutator;
 CircularBuffer		cbUsart1Received;
 uint8_t				CANMode;
 //##                                      #### ######## ################ PROTOTYPES
@@ -47,6 +48,7 @@ int main(void)
 	
 	// First init System Clock
 	RCC_Configuration();	// Init system clock
+
 	
 	// Init nonvolatile memory and recover saved values of peirpherals data buffers
 	EEPROM_Init(0);
@@ -65,8 +67,13 @@ int main(void)
 //	PID_LoadDefaults(&PID[1]);
 //	PID_LoadDefaults(&PID[2]);
 	ADCwithDMA_Config();
-	CANMode = IN_ReadMode();
+
+
+
 	NVIC_Configuration();
+
+
+	CANMode = IN_ReadMode();
 	NFv2_CrcInit();
 	PID_Init(&PID[0]);
 //	PID_Init(&PID[1]);

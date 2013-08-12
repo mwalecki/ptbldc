@@ -4,11 +4,209 @@
 #include "pid.h"
 #include "io.h"
 #include "nf/nfv2.h"
+#include "commutator.h"
 #include <stdlib.h>
 
 extern MOTOR_St				Motor;
 extern NF_STRUCT_ComBuf 	NFComBuf;
 extern PID_St				PID[];
+extern COMMUTATOR_St		Commutator;
+//extern const uint8_t 		sineTable[];
+static const uint8_t sineTable[COMMUTATION_TABLE_LENGTH * 3] = {
+0,       0,      221,
+8,       0,      225,
+17,      0,      229,
+25,      0,      232,
+33,      0,      236,
+42,      0,      239,
+50,      0,      241,
+58,      0,      244,
+66,      0,      246,
+74,      0,      248,
+82,      0,      250,
+90,      0,      252,
+98,      0,      253,
+105,     0,      254,
+113,     0,      254,
+120,     0,      255,
+128,     0,      255,
+135,     0,      255,
+142,     0,      254,
+149,     0,      254,
+155,     0,      253,
+162,     0,      252,
+168,     0,      250,
+174,     0,      248,
+180,     0,      246,
+186,     0,      244,
+192,     0,      241,
+197,     0,      239,
+202,     0,      236,
+207,     0,      232,
+212,     0,      229,
+217,     0,      225,
+221,     0,      221,
+225,     0,      217,
+229,     0,      212,
+232,     0,      207,
+236,     0,      202,
+239,     0,      197,
+241,     0,      192,
+244,     0,      186,
+246,     0,      180,
+248,     0,      174,
+250,     0,      168,
+252,     0,      162,
+253,     0,      155,
+254,     0,      149,
+254,     0,      142,
+255,     0,      135,
+255,     0,      127,
+255,     0,      120,
+254,     0,      113,
+254,     0,      105,
+253,     0,      98,
+252,     0,      90,
+250,     0,      82,
+248,     0,      74,
+246,     0,      66,
+244,     0,      58,
+241,     0,      50,
+239,     0,      42,
+236,     0,      33,
+232,     0,      25,
+229,     0,      17,
+225,     0,      8,
+221,     0,      0,
+225,     8,      0,
+229,     17,     0,
+232,     25,     0,
+236,     33,     0,
+239,     42,     0,
+241,     50,     0,
+244,     58,     0,
+246,     66,     0,
+248,     74,     0,
+250,     82,     0,
+252,     90,     0,
+253,     98,     0,
+254,     105,    0,
+254,     113,    0,
+255,     120,    0,
+255,     127,    0,
+255,     135,    0,
+254,     142,    0,
+254,     149,    0,
+253,     155,    0,
+252,     162,    0,
+250,     168,    0,
+248,     174,    0,
+246,     180,    0,
+244,     186,    0,
+241,     192,    0,
+239,     197,    0,
+236,     202,    0,
+232,     207,    0,
+229,     212,    0,
+225,     217,    0,
+221,     221,    0,
+217,     225,    0,
+212,     229,    0,
+207,     232,    0,
+202,     236,    0,
+197,     239,    0,
+192,     241,    0,
+186,     244,    0,
+180,     246,    0,
+174,     248,    0,
+168,     250,    0,
+162,     252,    0,
+155,     253,    0,
+149,     254,    0,
+142,     254,    0,
+135,     255,    0,
+128,     255,    0,
+120,     255,    0,
+113,     254,    0,
+105,     254,    0,
+98,      253,    0,
+90,      252,    0,
+82,      250,    0,
+74,      248,    0,
+66,      246,    0,
+58,      244,    0,
+50,      241,    0,
+42,      239,    0,
+33,      236,    0,
+25,      232,    0,
+17,      229,    0,
+8,       225,    0,
+0,       221,    0,
+0,       225,    8,
+0,       229,    17,
+0,       232,    25,
+0,       236,    33,
+0,       239,    42,
+0,       241,    50,
+0,       244,    58,
+0,       246,    66,
+0,       248,    74,
+0,       250,    82,
+0,       252,    90,
+0,       253,    98,
+0,       254,    105,
+0,       254,    113,
+0,       255,    120,
+0,       255,    128,
+0,       255,    135,
+0,       254,    142,
+0,       254,    149,
+0,       253,    155,
+0,       252,    162,
+0,       250,    168,
+0,       248,    174,
+0,       246,    180,
+0,       244,    186,
+0,       241,    192,
+0,       239,    197,
+0,       236,    202,
+0,       232,    207,
+0,       229,    212,
+0,       225,    217,
+0,       221,    221,
+0,       217,    225,
+0,       212,    229,
+0,       207,    232,
+0,       202,    236,
+0,       197,    239,
+0,       192,    241,
+0,       186,    244,
+0,       180,    246,
+0,       174,    248,
+0,       168,    250,
+0,       162,    252,
+0,       155,    253,
+0,       149,    254,
+0,       142,    254,
+0,       135,    255,
+0,       128,    255,
+0,       120,    255,
+0,       113,    254,
+0,       105,    254,
+0,       98,     253,
+0,       90,     252,
+0,       82,     250,
+0,       74,     248,
+0,       66,     246,
+0,       58,     244,
+0,       50,     241,
+0,       42,     239,
+0,       33,     236,
+0,       25,     232,
+0,       17,     229,
+0,       8,      225
+};
+
 
 
 //##                                      #### ######## ################ PRIVATE GLOBALS
@@ -55,11 +253,10 @@ void MOTOR_Proc(void) {
 		break;
 	}
 
-	BLDCMotorPrepareCommutation();
-	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
+//	BLDCMotorPrepareCommutation();
+//	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
 
 	NFComBuf.ReadDrivesPosition.data[0] = Motor.currentPosition;
-	NFComBuf.ReadDeviceVitals.data[0] = Motor.currentIncrement;
 	NFComBuf.ReadDrivesStatus.data[0] = (Motor.isSynchronized ? NF_DrivesStatus_Synchronized : 0)
 									| 	(Motor.positionLimit ? NF_DrivesStatus_PositionLimit : 0)
 									| 	(Motor.enableSignal ? 0 : NF_DrivesStatus_Error)
@@ -184,19 +381,19 @@ inline void motorPositionToPWM(void) {
 	PID[0].inputValue = PID_Controller(&PID[0]);
 
 	// #### Motor set input
-	if(PID[0].inputValue < -200)
-		Motor.setPWM = -200;
-	else if(PID[0].inputValue > 200)
-		Motor.setPWM = 200;
+	if(PID[0].inputValue < -SET_PWM_LIMIT)
+		Motor.setPWM = -SET_PWM_LIMIT;
+	else if(PID[0].inputValue > SET_PWM_LIMIT)
+		Motor.setPWM = SET_PWM_LIMIT;
 	else
 		Motor.setPWM = PID[0].inputValue;
     PID[0].lastProcessValue = Motor.setPWM;
 
 	// Do some magic to limit integrated error
-	if(PID[0].sumError > 200)
-		PID[0].sumError = 200;
-	else if(PID[0].sumError < -200)
-		PID[0].sumError = -200;
+	if(PID[0].sumError > SET_PWM_LIMIT)
+		PID[0].sumError = SET_PWM_LIMIT;
+	else if(PID[0].sumError < -SET_PWM_LIMIT)
+		PID[0].sumError = -SET_PWM_LIMIT;
 	// And magic continues to make PWM fade out as much as possible
     if(PID[0].sumError > 0)
         PID[0].sumError --;
@@ -207,7 +404,7 @@ inline void motorPositionToPWM(void) {
     else if(PID[0].lastProcessValue < 0)
         PID[0].lastProcessValue ++;
 
-    Motor.setPWM = 5 * Motor.setPWM;	// MOTORx_SetInput: -1000 <= inputValue <= 1000
+    //Motor.setPWM = 5 * Motor.setPWM;	// MOTORx_SetInput: -1000 <= inputValue <= 1000
 }
 
 inline void motorPWMpositionLimit(void) {
@@ -316,7 +513,7 @@ void MOTOR_Config(void) {
 	// Time Base configuration
 	TIM_TimeBaseStructure.TIM_Prescaler = 3;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseStructure.TIM_Period = 1200;		// 24MHz / 1200 = 20kHz
+	TIM_TimeBaseStructure.TIM_Period = 1200;		// 24MHz / 1SET_PWM_LIMIT = 20kHz
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
 	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
@@ -347,7 +544,7 @@ void MOTOR_Config(void) {
 	TIM_OC2PreloadConfig(TIM1, TIM_OCPreload_Enable);
 	TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
  
-	/* automatic output enable, break off, dead time ca. 200ns and  
+	/* automatic output enable, break off, dead time ca. SET_PWM_LIMITns and
 	// no lock of configuration */
 	TIM_BDTRInitStructure.TIM_OSSRState = TIM_OSSRState_Enable;
 	TIM_BDTRInitStructure.TIM_OSSIState = TIM_OSSIState_Enable;
@@ -368,13 +565,13 @@ void MOTOR_Config(void) {
 	TIM_BDTRConfig(TIM1, &TIM_BDTRInitStructure);
  
 	// preload ARR register
-	TIM_CCPreloadControl(TIM1, ENABLE);
+	TIM_CCPreloadControl(TIM1, DISABLE);
 
 	// Clear update interrupt bit
-	TIM_ClearITPendingBit(TIM1,TIM_IT_Update);
+	TIM_ClearITPendingBit(TIM1,TIM_IT_CC4);
 	// Enable capture/compare interrupt
 	TIM_ITConfig(TIM1,TIM_IT_CC4,ENABLE);
- 
+
 	// enable motor timer
 	TIM_Cmd(TIM1, ENABLE);
 
@@ -389,83 +586,128 @@ void MOTOR_Config(void) {
 	Motor.setCurrent = 0;
 }
  
-/* This is called from HALL timer interrupt handler
-   remember:
-     if hall a hall edge is detected
-     first the motor commutation event is done
-     next this routine is called which has to prepare the next motor step
-     (which FET must be switched on or off)
-   active freewhelling is used to minimize power loss */
-
-void BLDCMotorPrepareCommutation(void)
+/**
+ * Every PWM cycle this interrupt routine is called
+ * to calculate and preload PWM settings for the next cycle
+ */
+void TIM1_CC_IRQHandler(void)
 {
 	vu8			hallpos;
 	vu8			BH1, BL1, BH2, BL2, BH3, BL3;
 	const u8 	(*bldcBridgeState)[6];
 	vs16 		pwm;
+	int32_t		pwm1, pwm2, pwm3;
+	uint32_t	rotorPosition;
 
-	hallpos = HALL_Pattern();
+	// 200 ticks to TIM1 overflow
+	if (TIM_GetITStatus(TIM1, TIM_IT_CC4) != RESET) {
+		TIM_ClearITPendingBit(TIM1,TIM_IT_CC4);
 
-	if(Motor.setPWM == 0){
-		bldcBridgeState = BLDC_BRIDGE_STATE_STILL;
-		pwm = 0;
-	}
-	else if(Motor.setPWM > 0){
-		bldcBridgeState = BLDC_BRIDGE_STATE_FORWARD;
-		pwm = Motor.setPWM;
-	}
-	else{
-		bldcBridgeState = BLDC_BRIDGE_STATE_REVERSE;
-		pwm = - Motor.setPWM;
-	}
+		if(Commutator.synchronized != 0){
 
-	BH1 = bldcBridgeState[hallpos][0];
-	BL1 = bldcBridgeState[hallpos][1];
+			rotorPosition = COMM_RotorPosition();
 
-	BH2 = bldcBridgeState[hallpos][2];
-	BL2 = bldcBridgeState[hallpos][3];
+			if(Motor.setPWM == 0){
+				pwm = pwm1 = pwm2 = pwm3 = 0;
+			}
+			else if(Motor.setPWM > 0){
+				pwm = Motor.setPWM;
+				pwm1 = (pwm * sineTable[3 * (191 - rotorPosition) + 0]) >> 8;
+				pwm2 = (pwm * sineTable[3 * (191 - rotorPosition) + 1]) >> 8;
+				pwm3 = (pwm * sineTable[3 * (191 - rotorPosition) + 2]) >> 8;
+			}
+			else{
+				pwm = pwm1 = pwm2 = pwm3 = 0;
+			}
 
-	BH3 = bldcBridgeState[hallpos][4];
-	BL3 = bldcBridgeState[hallpos][5];
-
-
-	// Bridge FETs for Motor Phase U
-	if (BH1) {
-		TIM1->CCR1 = pwm;
-		TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
-	} else {
-		TIM1->CCR1 = 0;
-		if (BL1){
+			// Bridge FETs for Motor Phase U
+			TIM1->CCR1 = pwm1;
 			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
-		} else {
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
-		}
-	}
-
-	// Bridge FETs for Motor Phase V
-	if (BH2) {
-		TIM1->CCR2 = pwm;
-		TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
-	} else {
-		TIM1->CCR2 = 0;
-		if (BL2){
+			// Bridge FETs for Motor Phase V
+			TIM1->CCR2 = pwm2;
 			TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
-		} else {
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
+			// Bridge FETs for Motor Phase W
+			TIM1->CCR3 = pwm3;
+			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+
+
+			//NFComBuf.ReadDeviceVitals.data[0] = Commutator.currentHallPattern;
+			NFComBuf.ReadDeviceVitals.data[1] = Commutator.zeroRotorPos;
+			NFComBuf.ReadDeviceVitals.data[2] = Commutator.currentRotorPos;
+			NFComBuf.ReadDeviceVitals.data[3] = pwm1;
+			NFComBuf.ReadDeviceVitals.data[4] = pwm2;
+			NFComBuf.ReadDeviceVitals.data[5] = pwm3;
+
+		}
+		else {
+
+			hallpos = HALL_Pattern();
+
+			if(Motor.setPWM == 0){
+				bldcBridgeState = BLDC_BRIDGE_STATE_STILL;
+				pwm = 0;
+			}
+			else if(Motor.setPWM > 0){
+				bldcBridgeState = BLDC_BRIDGE_STATE_FORWARD;
+				pwm = Motor.setPWM;
+			}
+			else{
+				bldcBridgeState = BLDC_BRIDGE_STATE_REVERSE;
+				pwm = - Motor.setPWM;
+			}
+
+			BH1 = bldcBridgeState[hallpos][0];
+			BL1 = bldcBridgeState[hallpos][1];
+
+			BH2 = bldcBridgeState[hallpos][2];
+			BL2 = bldcBridgeState[hallpos][3];
+
+			BH3 = bldcBridgeState[hallpos][4];
+			BL3 = bldcBridgeState[hallpos][5];
+
+			// Bridge FETs for Motor Phase U
+			if (BH1) {
+				TIM1->CCR1 = pwm;
+				TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+			} else {
+				TIM1->CCR1 = 0;
+				if (BL1){
+					TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+				} else {
+					TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
+				}
+			}
+
+			// Bridge FETs for Motor Phase V
+			if (BH2) {
+				TIM1->CCR2 = pwm;
+				TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+			} else {
+				TIM1->CCR2 = 0;
+				if (BL2){
+					TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+				} else {
+					TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
+				}
+			}
+
+			// Bridge FETs for Motor Phase W
+			if (BH3) {
+				TIM1->CCR3 = pwm;
+				TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+			} else {
+				TIM1->CCR3 = 0;
+				if (BL3){
+					TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+				} else {
+					TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+				}
+			}
 		}
 	}
-
-	// Bridge FETs for Motor Phase W
-	if (BH3) {
-		TIM1->CCR3 = pwm;
-		TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
-	} else {
-		TIM1->CCR3 = 0;
-		if (BL3){
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
-		} else {
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
-		}
+	else {
+		while(1)
+			; // this should not happen
 	}
 }
 
@@ -475,6 +717,4 @@ void MOTOR_SetPWM(s16 pwm) {
 	else if(pwm < -MAX_PWM)
 		pwm = -MAX_PWM;
 	Motor.setPWM = pwm;
-	BLDCMotorPrepareCommutation();
-	TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
 }

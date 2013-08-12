@@ -75,10 +75,10 @@ void PID_Init(PID_St *pid)
  *
  *  \param pid_st  PID status struct.
  */
-int16_t PID_Controller(PID_St *pid_st)
+int32_t PID_Controller(PID_St *pid_st)
 {
-  int16_t err, p_term, d_term;
-  int32_t i_term, ret, temp;
+  int32_t err, p_term, d_term;
+  int64_t i_term, ret, temp;
 
   err = pid_st->referenceValue - pid_st->measurementValue;
 
@@ -121,7 +121,7 @@ int16_t PID_Controller(PID_St *pid_st)
     ret = -MAX_INT;
   }
 
-  return((int16_t)ret);
+  return((int32_t)ret);
 }
 
 /*! \brief Resets the integrator.

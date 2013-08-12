@@ -2,6 +2,7 @@
 #include "motor.h"
 
 extern MOTOR_St				Motor;
+extern COMMUTATOR_St		Commutator;
 
 //##                                      #### ######## ################ PRIVATE GLOBALS
 static uint32_t old16Position = 0;
@@ -54,7 +55,10 @@ void  ENCODER1_Config(void) {
 	TIM_ICInit(TIM2, &TIM_ICInitStructure);
 
 	// Encoder Interface Config
-	TIM_EncoderInterfaceConfig(TIM2, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Falling);
+	if(Commutator.polarity == 0)
+		TIM_EncoderInterfaceConfig(TIM2, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Falling);
+	else
+		TIM_EncoderInterfaceConfig(TIM2, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
 
 	//TIM_ClearFlag(TIM2, TIM_FLAG_Update | TIM_FLAG_COM | TIM_FLAG_Break | TIM_FLAG_CC1 | TIM_FLAG_CC2 |TIM_FLAG_CC3|TIM_FLAG_CC4);
 	//TIM_ITConfig(TIM2, TIM_IT_Update | TIM_IT_COM | TIM_IT_Break | TIM_IT_CC1 | TIM_IT_CC2 |TIM_IT_CC3|TIM_IT_CC4, ENABLE);
@@ -77,6 +81,8 @@ void  ENCODER1_Config(void) {
 	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
 	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&EXTI_InitStructure);
+
+	Commutator.encoderResolution = ENCODER_RESOLUTION;
 }
 
 /**

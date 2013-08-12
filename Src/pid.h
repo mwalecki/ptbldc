@@ -26,7 +26,7 @@
 #define PID_DEFAULT_I	5
 #define PID_DEFAULT_D	0
 
-#define SCALING_FACTOR  128
+#define SCALING_FACTOR  1000
 
 /*! \brief PID Status
  *
@@ -34,25 +34,25 @@
  */
 typedef struct{
 	//! Last process value, used to find derivative of process value.
-	int16_t lastProcessValue;
+	int32_t lastProcessValue;
 	//! Summation of errors, used for integrate calculations
-	int32_t sumError;
+	int64_t sumError;
 	//! The Proportional tuning constant, multiplied with SCALING_FACTOR
-	int16_t P_Factor;
+	int32_t P_Factor;
 	//! The Integral tuning constant, multiplied with SCALING_FACTOR
-	int16_t I_Factor;
+	int32_t I_Factor;
 	//! The Derivative tuning constant, multiplied with SCALING_FACTOR
-	int16_t D_Factor;
+	int32_t D_Factor;
 	//! Maximum allowed error, avoid overflow
-	int16_t maxError;
+	int32_t maxError;
 	//! Maximum allowed sumerror, avoid overflow
-	int32_t maxSumError;
+	int64_t maxSumError;
 	//	
-	int16_t referenceValue;
+	int32_t referenceValue;
 	//
-	int16_t measurementValue;
+	int32_t measurementValue;
 	//
-	int16_t inputValue;
+	int32_t inputValue;
 } PID_St;
 
 /*! \brief Maximum values
@@ -60,8 +60,8 @@ typedef struct{
  * Needed to avoid sign/overflow problems
  */
 // Maximum value of variables
-#define MAX_INT         INT16_MAX
-#define MAX_LONG        INT32_MAX
+#define MAX_INT         INT32_MAX
+#define MAX_LONG        INT64_MAX
 #define MAX_I_TERM      (MAX_LONG / 2)
 
 // Boolean values
@@ -70,7 +70,7 @@ typedef struct{
 
 void PID_LoadDefaults(PID_St *pid);
 void PID_Init(PID_St *pid);
-int16_t PID_Controller(PID_St *pid_st);
+int32_t PID_Controller(PID_St *pid_st);
 void PID_Reset_Integrator(PID_St *pid_st);
 
 #endif

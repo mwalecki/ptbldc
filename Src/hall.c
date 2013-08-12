@@ -1,4 +1,10 @@
 #include "hall.h"
+#include "nf/nfv2.h"
+#include "encoder.h"
+#include "commutator.h"
+
+extern NF_STRUCT_ComBuf 	NFComBuf;
+extern COMMUTATOR_St		Commutator;
 
 void HALL_Config(void) {
 	//Configuration Structures
@@ -28,16 +34,14 @@ void HALL_Config(void) {
 
 
 	// timer base configuration
-	// 10kHz (T=100us) TimerClock [24MHz/Prescaler]
+	// 10kHz (T=100us) TimerClock [72MHz/Prescaler]
 	// 65000 => 6,5s till overflow ;			   
-	TIM_TimeBaseStructure.TIM_Prescaler = 2400; 
+	TIM_TimeBaseStructure.TIM_Prescaler = 7200;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; 
 	TIM_TimeBaseStructure.TIM_Period = 65000; 
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0; 
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0; 
 	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
-
-	TIM4->CCR2 = 10; // Commutation Delay = 1ms
 													
 	// Timer input XOR function 
 	// T1F_ED connected to TIMx_CH1,TIMx_CH2,TIMx_CH3 
@@ -50,61 +54,30 @@ void HALL_Config(void) {
   
 	// On every TI1F_ED event the counter is resetted and update is tiggered 
 	TIM_SelectSlaveMode(TIM4, TIM_SlaveMode_Reset);
+
+	TIM_SelectMasterSlaveMode(TIM4, TIM_MasterSlaveMode_Enable);
  
 	// Channel 1 in input capture mode 
 	// on every TCR edge (build from TI1F_ED which is a HallSensor edge)  
 	// the timervalue is copied into ccr register and a CCR1 Interrupt
 	// TIM_IT_CC1 is fired 
 	TIM_ICInitStructure.TIM_Channel = TIM_Channel_1; 
-	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising; 
+	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_BothEdge;
 	// listen to T1, the  HallSensorEvent 
 	TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_TRC;
 	// Div:1, every edge 
 	TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
 	// noise filter: 1111 => 72000kHz / factor (==1) / 32 / 8 -> 281kHz 
 	// input noise filter (reference manual page 322) 
-	TIM_ICInitStructure.TIM_ICFilter = 0xF; 
+	TIM_ICInitStructure.TIM_ICFilter = 0x0f; //0x0f
 	TIM_ICInit(TIM4, &TIM_ICInitStructure);
   
-	// channel 2 can be used for commutation delay between hallsensor edge
-	// and switching the FET into the next step. if this delay time is
-	// over the channel 2 generates the commutation signal to the motor timer
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2; 
-	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; 
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; 
-	TIM_OCInitStructure.TIM_Pulse = 1; // 1 is no delay; 2000 = 7ms
-	TIM_OC2Init(TIM4, &TIM_OCInitStructure);
-  
-	// clear interrupt flag
-	TIM_ClearFlag(TIM4, TIM_FLAG_CC2);
-  
-	//TIM_SelectMasterSlaveMode(TIM4, TIM_MasterSlaveMode_Enable);
-	// TIM_SelectOutputTrigger(TIM4, TIM_TRGOSource_OC1);
-	// timer2 output compate signal is connected to TRIGO 
-	TIM_SelectOutputTrigger(TIM4, TIM_TRGOSource_OC2Ref);
-  
-	// Enable channel 1, 2 compate interrupt requests
+	// Enable channel 1 interrupt request
 	TIM_ITConfig(TIM4, TIM_IT_CC1, ENABLE);
-//	TIM_ITConfig(TIM4, TIM_IT_CC2, ENABLE);	// ####################!!!!!!!!!!!!!!!!!!!!!!!
- 
-	// Enable output compare preload 
-	//TIM_OC4PreloadConfig(TIM4, TIM_OCPreload_Enable);
-  
-	// Enable ARR preload 
-	//TIM_ARRPreloadConfig(TIM4, ENABLE);
   
 	// Enable update event 
 	//TIM_ClearFlag(TIM4, TIM_FLAG_Update);
 	//TIM_ITConfig(TIM4, TIM_IT_Update, DISABLE);
-	 
-	// Interrupts for BLDC Bridge switching and Hall have highest priority
-	// Set in interrupts.c
-	 
-	  // -------------------
-	// HallSensor is now configured, if BLDC Timer is also configured
-	// after enabling timer 3 
-	// the motor will start after next overflow of the hall timer because
-	// this generates the first startup motor cummutation event
 	TIM_Cmd(TIM4, ENABLE);
 }
 
@@ -112,30 +85,60 @@ u8 HALL_Pattern(void){
 	return (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_12)<<2 | GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_13)<<1
 		| GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_14)<<0);
 }
+
+uint32_t COMM_RotorPosition(void){
+	uint32_t tempPosition;
+
+	Commutator.currentEncPos = ENCODER1_Position();
+
+	if(Commutator.currentEncPos < Commutator.zeroRotorPos)
+		Commutator.zeroRotorPos -= Commutator.encoderResolution;
+	 tempPosition = (Commutator.currentEncPos - Commutator.zeroRotorPos) % Commutator.encoderResolution;
+
+	tempPosition *= COMMUTATION_TABLE_LENGTH;
+	tempPosition /= Commutator.encoderResolution;
+
+	Commutator.currentRotorPos = (tempPosition > (COMMUTATION_TABLE_LENGTH-1)) ?
+			(COMMUTATION_TABLE_LENGTH-1) : tempPosition;
+	return Commutator.currentRotorPos;
+}
  
 // ------------- HallSensor interrupt handler -----------------
- 
-// this handles TIM4 irqs (from HallSensor)
 void TIM4_IRQHandler(void) {
-  if (TIM_GetITStatus(TIM4, TIM_IT_CC1) != RESET)
-  { 
-    TIM_ClearITPendingBit(TIM4, TIM_IT_CC1);
-    // calculate motor  speed or else with CCR1 values
-//    hallccr1 = TIM4->CCR1;
-    BLDCMotorPrepareCommutation(); // <-- To chyba powinno byc tutaj?
-	//TIM_GenerateEvent(TIM1, TIM_EventSource_COM);
-//	USART3_SendString("intcc1\r\n\n");
-  } 
-  else if (TIM_GetITStatus(TIM4, TIM_IT_CC2) != RESET)
-  { 
-    TIM_ClearITPendingBit(TIM4, TIM_IT_CC2);
-    // this interrupt handler is called AFTER the motor commutaton event
-    // is done
-    // after commutation the next motor step must be prepared
-    // use inline functions in irq handlers static __INLINE funct(..) {..} 
-//    BLDCMotorPrepareCommutation(); // <-- A nie tutaj...
-//	USART3_SendString("intcc2\r\n\n");
-  } else { 
-    ; // this should not happen 
-  } 
+
+	/*
+	 * Zero Rotor Position detection based on Hall pattern:
+	 * 011 -> 001 forward
+	 * 001 -> 011 reverse
+	 */
+	if (TIM_GetITStatus(TIM4, TIM_IT_CC1) != RESET)	{
+		TIM_ClearITPendingBit(TIM4, TIM_IT_CC1);
+
+		Commutator.currentEncPos = ENCODER1_Position();
+		Commutator.currentHallPattern = HALL_Pattern();
+
+		if(((Commutator.previousHallPattern == 0b011) && (Commutator.currentHallPattern == 0b001))
+				|| ((Commutator.previousHallPattern == 0b001) && (Commutator.currentHallPattern == 0b011))){
+			Commutator.zeroRotorPos = Commutator.currentEncPos;
+			// First zero-crossing of rotor position
+			if(Commutator.synchronized == 0)
+				Commutator.synchronized ++;
+		}
+
+
+
+
+		Commutator.previousHallPattern = Commutator.currentHallPattern;
+
+		// calculate motor  speed or else with CCR1 values
+		//NFComBuf.ReadDeviceVitals.data[0] = Commutator.currentHallPattern;
+		//NFComBuf.ReadDeviceVitals.data[1] = Commutator.zeroRotorPos;
+		//NFComBuf.ReadDeviceVitals.data[2] = Commutator.currentRotorPos;
+		//NFComBuf.ReadDeviceVitals.data[7] = TIM4->CCR1;
+
+	}
+	else {
+		while(1)
+			; // this should not happen
+	}
 }

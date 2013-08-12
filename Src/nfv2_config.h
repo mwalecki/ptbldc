@@ -13,7 +13,7 @@
 * to be supported by module:
 */
 	#define NF_BUFSZ_ReadDeviceStatus		2
-	#define NF_BUFSZ_ReadDeviceVitals		2
+	#define NF_BUFSZ_ReadDeviceVitals		8
 
 	#define NF_BUFSZ_SetDrivesMode			2
 	#define NF_BUFSZ_SetDrivesSpeed			2

@@ -7,10 +7,12 @@
 #include "io.h"
 #include "adc.h"
 #include "nf/nfv2.h"
+#include "encoder.h"
 
 extern MOTOR_St				Motor;
 extern uint16_t 			serialNumber;
 extern NF_STRUCT_ComBuf 	NFComBuf;
+extern COMMUTATOR_St			Commutator;
 
 uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, volatile uint8_t *txBuf, volatile uint8_t *txCnt)
 {
@@ -154,6 +156,11 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 			NFComBuf.SetPositionRegulator.updated = 1;
 			NFComBuf.dataReceived = 1;
 		_END_GET_SETANDDO_MEMBER 
+	_ENDGROUP
+
+	else
+	_GROUP(":ENC1")
+		_GET_SET_MEMBER(Commutator.polarity, ":POL")
 	_ENDGROUP
 
 	else
