@@ -1,5 +1,8 @@
 #include "common.h"
 #include "commutator.h"
+
+extern COMMUTATOR_St		Commutator;
+
 /*! \brief Sine wave modulation table
  *
  *  Table containing modulation values for all three phases.
@@ -201,3 +204,18 @@ static const uint8_t sineTable[COMMUTATION_TABLE_LENGTH * 3] = {
 0,       17,     229,
 0,       8,      225
 };
+
+uint32_t commutationTableIndexFwd(uint32_t rotorPos, uint8_t phase){
+	rotorPos += Commutator.commTableIndexAdvance;
+	if(rotorPos > (COMMUTATION_TABLE_LENGTH-1))
+		rotorPos -= (COMMUTATION_TABLE_LENGTH-1);
+	return (3 * ((COMMUTATION_TABLE_LENGTH-1) - rotorPos) + phase);
+}
+
+uint32_t commutationTableIndexRev(uint32_t rotorPos, uint8_t phase){
+	rotorPos = rotorPos + (COMMUTATION_TABLE_LENGTH / 2) - Commutator.commTableIndexAdvance;
+	if(rotorPos > (COMMUTATION_TABLE_LENGTH-1))
+		rotorPos -= (COMMUTATION_TABLE_LENGTH-1);
+	return (3 * ((COMMUTATION_TABLE_LENGTH-1) - rotorPos) + phase);
+}
+

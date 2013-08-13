@@ -12,7 +12,7 @@ extern NF_STRUCT_ComBuf 	NFComBuf;
 extern PID_St				PID[];
 extern COMMUTATOR_St		Commutator;
 //extern const uint8_t 		sineTable[];
-static const uint8_t sineTable[COMMUTATION_TABLE_LENGTH * 3] = {
+extern uint8_t sineTable[COMMUTATION_TABLE_LENGTH * 3] = {
 0,       0,      221,
 8,       0,      225,
 17,      0,      229,
@@ -612,12 +612,15 @@ void TIM1_CC_IRQHandler(void)
 			}
 			else if(Motor.setPWM > 0){
 				pwm = Motor.setPWM;
-				pwm1 = (pwm * sineTable[3 * (191 - rotorPosition) + 0]) >> 8;
-				pwm2 = (pwm * sineTable[3 * (191 - rotorPosition) + 1]) >> 8;
-				pwm3 = (pwm * sineTable[3 * (191 - rotorPosition) + 2]) >> 8;
+				pwm1 = (pwm * sineTable[commutationTableIndexFwd(rotorPosition, 0)]) >> 8;
+				pwm2 = (pwm * sineTable[commutationTableIndexFwd(rotorPosition, 1)]) >> 8;
+				pwm3 = (pwm * sineTable[commutationTableIndexFwd(rotorPosition, 2)]) >> 8;
 			}
 			else{
-				pwm = pwm1 = pwm2 = pwm3 = 0;
+				pwm = - Motor.setPWM;
+				pwm1 = (pwm * sineTable[commutationTableIndexRev(rotorPosition, 0)]) >> 8;
+				pwm2 = (pwm * sineTable[commutationTableIndexRev(rotorPosition, 1)]) >> 8;
+				pwm3 = (pwm * sineTable[commutationTableIndexRev(rotorPosition, 2)]) >> 8;
 			}
 
 			// Bridge FETs for Motor Phase U

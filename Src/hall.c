@@ -34,9 +34,9 @@ void HALL_Config(void) {
 
 
 	// timer base configuration
-	// 10kHz (T=100us) TimerClock [72MHz/Prescaler]
-	// 65000 => 6,5s till overflow ;			   
-	TIM_TimeBaseStructure.TIM_Prescaler = 7200;
+	// 100kHz (T=10us) TimerClock [72MHz/Prescaler]
+	// 65000 => 650ms till overflow ;
+	TIM_TimeBaseStructure.TIM_Prescaler = 720;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; 
 	TIM_TimeBaseStructure.TIM_Period = 65000; 
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0; 
@@ -111,34 +111,49 @@ void TIM4_IRQHandler(void) {
 	 * 011 -> 001 forward
 	 * 001 -> 011 reverse
 	 */
-	if (TIM_GetITStatus(TIM4, TIM_IT_CC1) != RESET)	{
-		TIM_ClearITPendingBit(TIM4, TIM_IT_CC1);
+//	if (TIM_GetITStatus(TIM4, TIM_IT_CC1) != RESET)	{
 
 		Commutator.currentEncPos = ENCODER1_Position();
 		Commutator.currentHallPattern = HALL_Pattern();
 
-		if(((Commutator.previousHallPattern == 0b011) && (Commutator.currentHallPattern == 0b001))
-				|| ((Commutator.previousHallPattern == 0b001) && (Commutator.currentHallPattern == 0b011))){
+		TIM_ClearITPendingBit(TIM4, TIM_IT_CC1);
+
+		if(((Commutator.prev0HallPattern == 0b011) && (Commutator.currentHallPattern == 0b001))
+				|| ((Commutator.prev0HallPattern == 0b001) && (Commutator.currentHallPattern == 0b011))){
 			Commutator.zeroRotorPos = Commutator.currentEncPos;
 			// First zero-crossing of rotor position
 			if(Commutator.synchronized == 0)
 				Commutator.synchronized ++;
 		}
 
+		// Measure last Hall step duration only if motor moves continously in one direction
+		if(Commutator.currentHallPattern != Commutator.prev1HallPattern){
+			Commutator.lastHallStepDuration = TIM4->CCR1;
+		}
+
+		// Commutation Table Index Advance
+		// Iadv = Ni * Tpwm / tcomm
+		if(Commutator.lastHallStepDuration > 0){
+			Commutator.commTableIndexAdvance =
+					Commutator.advanceCoeff * ((COMMUTATION_TABLE_LENGTH / 6) * 5)
+					/ Commutator.lastHallStepDuration;
+		}
+		else
+			Commutator.commTableIndexAdvance = 0;
 
 
-
-		Commutator.previousHallPattern = Commutator.currentHallPattern;
+		Commutator.prev1HallPattern = Commutator.prev0HallPattern;
+		Commutator.prev0HallPattern = Commutator.currentHallPattern;
 
 		// calculate motor  speed or else with CCR1 values
 		//NFComBuf.ReadDeviceVitals.data[0] = Commutator.currentHallPattern;
 		//NFComBuf.ReadDeviceVitals.data[1] = Commutator.zeroRotorPos;
 		//NFComBuf.ReadDeviceVitals.data[2] = Commutator.currentRotorPos;
-		//NFComBuf.ReadDeviceVitals.data[7] = TIM4->CCR1;
+		NFComBuf.ReadDeviceVitals.data[7] = Commutator.lastHallStepDuration;
 
-	}
-	else {
-		while(1)
-			; // this should not happen
-	}
+//	}
+//	else {
+//		while(1)
+//			; // this should not happen
+//	}
 }

@@ -1,7 +1,7 @@
 #include "eebackup.h"
 #include "pid.h"
 #include "nf/nfv2.h"
-#include "encoder.h"
+#include "commutator.h"
 	 
 extern uint16_t				serialNumber;
 extern SERVO_St				Servo;
@@ -32,6 +32,7 @@ void eebackup_Recover(void)
 	serialNumber = EEPROM_Read(EEADDR_SERIAL);
 
 	Commutator.polarity = EEPROM_Read(EEADDR_ENC1_POLARITY);
+	Commutator.advanceCoeff = EEPROM_Read(EEADDR_COMM_ADV_COEFF);
 }
 
 void eebackup_SaveAll(void)
@@ -55,6 +56,7 @@ void eebackup_SaveAll(void)
 	EEPROM_Write(EEADDR_DRV1_MAXSPEED_H, (u16) ((NFComBuf.SetDrivesMaxSpeed.data[0] >> 16) & 0x0000ffff));
 
 	EEPROM_Write(EEADDR_ENC1_POLARITY, (u16) Commutator.polarity);
+	EEPROM_Write(EEADDR_COMM_ADV_COEFF, (u16) Commutator.advanceCoeff);
 }
 
 void eebackup_SaveInitialValues(void)

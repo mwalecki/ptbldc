@@ -9,6 +9,7 @@
 #include "motor.h"
 #include "hall.h"
 #include "encoder.h"
+#include "commutator.h"
 #include "adc.h"
 #include "eeprom.h"
 #include "eebackup.h"

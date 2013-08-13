@@ -1,4 +1,5 @@
 #include "encoder.h"
+#include "commutator.h"
 #include "motor.h"
 
 extern MOTOR_St				Motor;
