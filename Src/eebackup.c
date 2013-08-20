@@ -2,12 +2,14 @@
 #include "pid.h"
 #include "nf/nfv2.h"
 #include "commutator.h"
+#include "motor.h"
 	 
 extern uint16_t				serialNumber;
 extern SERVO_St				Servo;
 extern COMMUTATOR_St			Commutator;
 extern NF_STRUCT_ComBuf 	NFComBuf;
 extern PID_St				PID[];
+extern MOTOR_St				Motor;
 
 void eebackup_Recover(void)
 {
@@ -31,8 +33,11 @@ void eebackup_Recover(void)
 
 	serialNumber = EEPROM_Read(EEADDR_SERIAL);
 
-	Commutator.polarity = EEPROM_Read(EEADDR_ENC1_POLARITY);
+	Commutator.encoderPolarity = EEPROM_Read(EEADDR_ENC_POLARITY);
 	Commutator.advanceCoeff = EEPROM_Read(EEADDR_COMM_ADV_COEFF);
+	Motor.positionCurrentcascade = EEPROM_Read(EEADDR_MOT_PID_CASC);
+	Commutator.encoderResolution = EEPROM_Read(EEADDR_ENC_RESOLUTION);
+	Commutator.commutationMode = EEPROM_Read(EEADDR_COMM_MODE);
 }
 
 void eebackup_SaveAll(void)
@@ -55,8 +60,11 @@ void eebackup_SaveAll(void)
 	EEPROM_Write(EEADDR_DRV1_MAXSPEED_L, (u16) (NFComBuf.SetDrivesMaxSpeed.data[0] & 0x0000ffff));
 	EEPROM_Write(EEADDR_DRV1_MAXSPEED_H, (u16) ((NFComBuf.SetDrivesMaxSpeed.data[0] >> 16) & 0x0000ffff));
 
-	EEPROM_Write(EEADDR_ENC1_POLARITY, (u16) Commutator.polarity);
+	EEPROM_Write(EEADDR_ENC_POLARITY, (u16) Commutator.encoderPolarity);
 	EEPROM_Write(EEADDR_COMM_ADV_COEFF, (u16) Commutator.advanceCoeff);
+	EEPROM_Write(EEADDR_MOT_PID_CASC, (u16) Motor.positionCurrentcascade);
+	EEPROM_Write(EEADDR_ENC_RESOLUTION, (u16) Commutator.encoderResolution);
+	EEPROM_Write(EEADDR_COMM_MODE, (u16) Commutator.commutationMode);
 }
 
 void eebackup_SaveInitialValues(void)

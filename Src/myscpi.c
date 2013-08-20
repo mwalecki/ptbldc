@@ -142,7 +142,7 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 	_ENDGROUP
 
 	else
-	_GROUP(":PID1")
+	_GROUP(":PID:POS")
 		_GET_SETANDDO_MEMBER(NFComBuf.SetPositionRegulator.data[0].p, ":P")
 			NFComBuf.SetPositionRegulator.updated = 1;
 			NFComBuf.dataReceived = 1;
@@ -160,12 +160,50 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 	_ENDGROUP
 
 	else
-	_GROUP(":ENC1")
-		_GET_SET_MEMBER(Commutator.polarity, ":POL")
+	_GROUP(":PID:CURR")
+		_GET_SETANDDO_MEMBER(NFComBuf.SetCurrentRegulator.data[0].p, ":P")
+			NFComBuf.SetCurrentRegulator.updated = 1;
+			NFComBuf.dataReceived = 1;
+		_END_GET_SETANDDO_MEMBER
+		else
+		_GET_SETANDDO_MEMBER(NFComBuf.SetCurrentRegulator.data[0].i, ":I")
+			NFComBuf.SetCurrentRegulator.updated = 1;
+			NFComBuf.dataReceived = 1;
+		_END_GET_SETANDDO_MEMBER
+		else
+		_GET_SETANDDO_MEMBER(NFComBuf.SetCurrentRegulator.data[0].d, ":D")
+			NFComBuf.SetCurrentRegulator.updated = 1;
+			NFComBuf.dataReceived = 1;
+		_END_GET_SETANDDO_MEMBER
+	_ENDGROUP
+
+	else
+	_GROUP(":PID")
+		_IF_MEMBER_THEN(":CASC ON")
+			Motor.positionCurrentcascade = 1;
+		else
+		_IF_MEMBER_THEN(":CASC OFF")
+			Motor.positionCurrentcascade = 0;
+	_ENDGROUP
+
+	else
+	_GROUP(":ENC")
+		_GET_SET_MEMBER(Commutator.encoderResolution, ":RES")
+		else
+		_GET_SET_MEMBER(Commutator.encoderPolarity, ":POL")
 	_ENDGROUP
 
 	else
 	_GROUP(":COMM")
+		_IF_MEMBER_THEN(":MOD:BLOC")
+			Commutator.commutationMode = COMM_MODE_BLOCK;
+		else
+		_IF_MEMBER_THEN(":MOD:SIN")
+			Commutator.commutationMode = COMM_MODE_SINE;
+		else
+		_IF_MEMBER_THEN(":MOD:NON")
+			Commutator.commutationMode = COMM_MODE_NONE;
+		else
 		_GET_SET_MEMBER(Commutator.advanceCoeff, ":ADV")
 	_ENDGROUP
 

@@ -105,55 +105,47 @@ uint32_t COMM_RotorPosition(void){
  
 // ------------- HallSensor interrupt handler -----------------
 void TIM4_IRQHandler(void) {
+	Commutator.currentEncPos = ENCODER1_Position();
+	Commutator.currentHallPattern = HALL_Pattern();
 
-	/*
-	 * Zero Rotor Position detection based on Hall pattern:
-	 * 011 -> 001 forward
-	 * 001 -> 011 reverse
-	 */
-//	if (TIM_GetITStatus(TIM4, TIM_IT_CC1) != RESET)	{
+	TIM_ClearITPendingBit(TIM4, TIM_IT_CC1);
 
-		Commutator.currentEncPos = ENCODER1_Position();
-		Commutator.currentHallPattern = HALL_Pattern();
-
-		TIM_ClearITPendingBit(TIM4, TIM_IT_CC1);
-
-		if(((Commutator.prev0HallPattern == 0b011) && (Commutator.currentHallPattern == 0b001))
-				|| ((Commutator.prev0HallPattern == 0b001) && (Commutator.currentHallPattern == 0b011))){
-			Commutator.zeroRotorPos = Commutator.currentEncPos;
-			// First zero-crossing of rotor position
-			if(Commutator.synchronized == 0)
-				Commutator.synchronized ++;
-		}
-
-		// Measure last Hall step duration only if motor moves continously in one direction
-		if(Commutator.currentHallPattern != Commutator.prev1HallPattern){
-			Commutator.lastHallStepDuration = TIM4->CCR1;
-		}
-
-		// Commutation Table Index Advance
-		// Iadv = Ni * Tpwm / tcomm
-		if(Commutator.lastHallStepDuration > 0){
-			Commutator.commTableIndexAdvance =
-					Commutator.advanceCoeff * ((COMMUTATION_TABLE_LENGTH / 6) * 5)
-					/ Commutator.lastHallStepDuration;
-		}
-		else
-			Commutator.commTableIndexAdvance = 0;
-
-
-		Commutator.prev1HallPattern = Commutator.prev0HallPattern;
-		Commutator.prev0HallPattern = Commutator.currentHallPattern;
-
-		// calculate motor  speed or else with CCR1 values
-		//NFComBuf.ReadDeviceVitals.data[0] = Commutator.currentHallPattern;
-		//NFComBuf.ReadDeviceVitals.data[1] = Commutator.zeroRotorPos;
-		//NFComBuf.ReadDeviceVitals.data[2] = Commutator.currentRotorPos;
-		NFComBuf.ReadDeviceVitals.data[7] = Commutator.lastHallStepDuration;
-
+	// Encoder error detection
+//	if(Commutator.prev0HallPattern != Commutator.currentHallPattern){
+//		encoderIncrement = Commutator.currentEncPos - Commutator.previousEncPos;
+//		if(encoderIncrement < 0)
+//			encoderIncrement = - encoderIncrement;
+//		if((Commutator.encoderResolution/7 > encoderIncrement)
+//				|| (Commutator.encoderResolution/5 < encoderIncrement))
+//			NFComBuf.SetDrivesMode.data[0] = NF_DrivesMode_ERROR;
 //	}
-//	else {
-//		while(1)
-//			; // this should not happen
-//	}
+
+
+	if(((Commutator.prev0HallPattern == 0b011) && (Commutator.currentHallPattern == 0b001))
+			|| ((Commutator.prev0HallPattern == 0b001) && (Commutator.currentHallPattern == 0b011))){
+		Commutator.zeroRotorPos = Commutator.currentEncPos;
+		// First zero-crossing of rotor position
+		if(Commutator.synchronized == 0)
+			Commutator.synchronized ++;
+	}
+
+	// Measure last Hall step duration only if motor moves continously in one direction
+	if(Commutator.currentHallPattern != Commutator.prev1HallPattern){
+		Commutator.lastHallStepDuration = TIM4->CCR1;
+	}
+
+	// Commutation Table Index Advance
+	// Iadv = Ni * Tpwm / tcomm
+	if(Commutator.lastHallStepDuration > 0){
+		Commutator.commTableIndexAdvance =
+				Commutator.advanceCoeff * ((COMMUTATION_TABLE_LENGTH / 6) * 5)
+				/ Commutator.lastHallStepDuration;
+	}
+	else
+		Commutator.commTableIndexAdvance = 0;
+
+
+	Commutator.prev1HallPattern = Commutator.prev0HallPattern;
+	Commutator.prev0HallPattern = Commutator.currentHallPattern;
+	Commutator.previousEncPos = Commutator.currentEncPos;
 }

@@ -54,8 +54,12 @@
 #define EEADDR_DRV1_MAXSPEED_L 42
 #define EEADDR_DRV1_MAXSPEED_H 43
 
-#define EEADDR_ENC1_POLARITY 44
+#define EEADDR_ENC_POLARITY 44
 #define EEADDR_COMM_ADV_COEFF 45
+#define EEADDR_ENC_RESOLUTION 46
+
+#define EEADDR_MOT_PID_CASC 47
+#define EEADDR_COMM_MODE 48
 
 void eebackup_Recover(void);	
 void eebackup_SaveAll(void);

@@ -7,6 +7,10 @@
 #ifndef _COMMUTATION_H_
 #define _COMMUTATION_H_
 
+#define COMM_MODE_BLOCK	0
+#define COMM_MODE_SINE	1
+#define COMM_MODE_NONE	2
+
 //! The number of elements in the sine modulation table per phase.
 #define COMMUTATION_TABLE_LENGTH 192U
 
@@ -17,11 +21,12 @@
 enum direction {NONE=0, FORWARD, REVERSE};
 
 typedef struct{
-	uint8_t polarity;
+	uint8_t commutationMode;
+	uint8_t encoderPolarity;
 	int32_t previousEncPos;
 	int32_t currentEncPos;
 	int32_t currentRotorPos;
-	int32_t encoderResolution;
+	uint16_t encoderResolution;
 	int32_t zeroRotorPos;
 	uint8_t currentHallPattern;
 	uint8_t prev0HallPattern;

@@ -6,7 +6,9 @@
 #include "nf/nfv2.h"
 #include "commutator.h"
 #include <stdlib.h>
+#include "adc.h"
 
+extern ADC_St				ADC;
 extern MOTOR_St				Motor;
 extern NF_STRUCT_ComBuf 	NFComBuf;
 extern PID_St				PID[];
@@ -247,6 +249,9 @@ void MOTOR_Proc(void) {
 	case NF_DrivesMode_PWM:
 		Motor.setPWM = NFComBuf.SetDrivesPWM.data[0];
 		motorPWMpositionLimit();
+		break;
+	case NF_DrivesMode_CURRENT:
+		Motor.setCurrent = NFComBuf.SetDrivesCurrent.data[0];
 		break;
 	default:
 		Motor.setPWM = 0;
@@ -512,8 +517,10 @@ void MOTOR_Config(void) {
  
 	// Time Base configuration
 	TIM_TimeBaseStructure.TIM_Prescaler = 3;
-	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseStructure.TIM_Period = 1200;		// 24MHz / 1SET_PWM_LIMIT = 20kHz
+	// Center aligned mode 2, CMS = "10"
+	// The Output compare interrupt flag is set when the counter counts up
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_CenterAligned2;
+	TIM_TimeBaseStructure.TIM_Period = 600;		// 24MHz / 2 * SET_PWM_LIMIT = 20kHz
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
 	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
@@ -524,7 +531,7 @@ void MOTOR_Config(void) {
 	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
 	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
 	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
-	TIM_OCInitStructure.TIM_Pulse = 500; // BLDC_ccr_val
+	TIM_OCInitStructure.TIM_Pulse = 0; // BLDC_ccr_val
 
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
@@ -535,7 +542,7 @@ void MOTOR_Config(void) {
 	TIM_OC2Init(TIM1, &TIM_OCInitStructure);
 	TIM_OC3Init(TIM1, &TIM_OCInitStructure);
 
-	TIM_OCInitStructure.TIM_Pulse = 1000; // Just before update event, fire CC4 interrupt to preload PWM values
+	TIM_OCInitStructure.TIM_Pulse = 1; // Just before update event, fire CC4 interrupt to preload PWM values
 
 	TIM_OC4Init(TIM1, &TIM_OCInitStructure);
 
@@ -572,6 +579,9 @@ void MOTOR_Config(void) {
 	// Enable capture/compare interrupt
 	TIM_ITConfig(TIM1,TIM_IT_CC4,ENABLE);
 
+	/* Master Mode selection */
+	TIM_SelectOutputTrigger(TIM1, TIM_TRGOSource_OC4Ref);
+
 	// enable motor timer
 	TIM_Cmd(TIM1, ENABLE);
 
@@ -603,7 +613,40 @@ void TIM1_CC_IRQHandler(void)
 	if (TIM_GetITStatus(TIM1, TIM_IT_CC4) != RESET) {
 		TIM_ClearITPendingBit(TIM1,TIM_IT_CC4);
 
-		if(Commutator.synchronized != 0){
+		if(Motor.mode == NF_DrivesMode_CURRENT){
+			// #### PID input data preparation
+			PID[1].referenceValue	= Motor.setCurrent;
+			PID[1].measurementValue	= ADC.currentMeasure_miliampere[0];
+
+			// #### do PID
+			PID[1].inputValue = PID_Controller(&PID[1]);
+
+			// #### Motor set input
+			if(PID[1].inputValue < -SET_PWM_LIMIT)
+				Motor.setPWM = -SET_PWM_LIMIT;
+			else if(PID[0].inputValue > SET_PWM_LIMIT)
+				Motor.setPWM = SET_PWM_LIMIT;
+			else
+				Motor.setPWM = PID[1].inputValue;
+		    PID[0].lastProcessValue = Motor.setPWM;
+
+			// Do some magic to limit integrated error
+			if(PID[1].sumError > SET_PWM_LIMIT)
+				PID[1].sumError = SET_PWM_LIMIT;
+			else if(PID[1].sumError < -SET_PWM_LIMIT)
+				PID[1].sumError = -SET_PWM_LIMIT;
+			// And magic continues to make PWM fade out as much as possible
+		    if(PID[1].sumError > 0)
+		        PID[1].sumError --;
+		    else if(PID[1].sumError < 0)
+		        PID[1].sumError ++;
+		    if(PID[1].lastProcessValue > 0)
+		        PID[1].lastProcessValue --;
+		    else if(PID[1].lastProcessValue < 0)
+		        PID[1].lastProcessValue ++;
+		}
+
+		if((Commutator.commutationMode == COMM_MODE_SINE) && (Commutator.synchronized != 0)){
 
 			rotorPosition = COMM_RotorPosition();
 
@@ -624,13 +667,13 @@ void TIM1_CC_IRQHandler(void)
 			}
 
 			// Bridge FETs for Motor Phase U
-			TIM1->CCR1 = pwm1;
+			TIM1->CCR1 = pwm1>>1;
 			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
 			// Bridge FETs for Motor Phase V
-			TIM1->CCR2 = pwm2;
+			TIM1->CCR2 = pwm2>>1;
 			TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
 			// Bridge FETs for Motor Phase W
-			TIM1->CCR3 = pwm3;
+			TIM1->CCR3 = pwm3>>1;
 			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
 
 
@@ -642,7 +685,7 @@ void TIM1_CC_IRQHandler(void)
 			NFComBuf.ReadDeviceVitals.data[5] = pwm3;
 
 		}
-		else {
+		else if((Commutator.commutationMode == COMM_MODE_SINE) || (Commutator.commutationMode == COMM_MODE_BLOCK)){
 
 			hallpos = HALL_Pattern();
 
@@ -670,7 +713,7 @@ void TIM1_CC_IRQHandler(void)
 
 			// Bridge FETs for Motor Phase U
 			if (BH1) {
-				TIM1->CCR1 = pwm;
+				TIM1->CCR1 = pwm>>1;
 				TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
 			} else {
 				TIM1->CCR1 = 0;
@@ -683,7 +726,7 @@ void TIM1_CC_IRQHandler(void)
 
 			// Bridge FETs for Motor Phase V
 			if (BH2) {
-				TIM1->CCR2 = pwm;
+				TIM1->CCR2 = pwm>>1;
 				TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
 			} else {
 				TIM1->CCR2 = 0;
@@ -696,7 +739,7 @@ void TIM1_CC_IRQHandler(void)
 
 			// Bridge FETs for Motor Phase W
 			if (BH3) {
-				TIM1->CCR3 = pwm;
+				TIM1->CCR3 = pwm>>1;
 				TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
 			} else {
 				TIM1->CCR3 = 0;
@@ -707,17 +750,50 @@ void TIM1_CC_IRQHandler(void)
 				}
 			}
 		}
+		else{
+
+			// Bridge FETs for Motor Phase U
+			TIM1->CCR1 = 0;
+			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCx_Disable);
+			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
+			// Bridge FETs for Motor Phase V
+			TIM1->CCR2 = 0;
+			TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCx_Disable);
+			TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
+			// Bridge FETs for Motor Phase W
+			TIM1->CCR3 = 0;
+			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCx_Disable);
+			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+		}
 	}
 	else {
 		while(1)
 			; // this should not happen
 	}
+
+	s32 raw;
+
+//	ADC.currentMeasure_raw[0] =
+
+	raw = ADC1->JDR1 - ADC.currentMeasure_unitsOffset;
+	if(raw < 0)
+		raw = 0;
+	ADC.currentMeasure_milivolt[0] = raw * ADC.currentMeasure_uVoltsPerUnit / 1000;
+	raw = ADC.currentMeasure_milivolt[0] - ADC.currentMeasure_mVOffset;
+	if(raw < 0)
+		raw = 0;
+	ADC.currentMeasure_miliampere[0] = raw * ADC.currentMeasure_uAmperesPermV / 1000;
+
+
+	NFComBuf.ReadDeviceVitals.data[5] = ADC1->JDR1;
+	NFComBuf.ReadDeviceVitals.data[6] = ADC.currentMeasure_milivolt[0];
+	NFComBuf.ReadDeviceVitals.data[7] = ADC.currentMeasure_miliampere[0];
 }
 
 void MOTOR_SetPWM(s16 pwm) {
-	if(pwm > MAX_PWM)
-		pwm = MAX_PWM;
-	else if(pwm < -MAX_PWM)
-		pwm = -MAX_PWM;
+	if(pwm > SET_PWM_LIMIT)
+		pwm = SET_PWM_LIMIT;
+	else if(pwm < -SET_PWM_LIMIT)
+		pwm = -SET_PWM_LIMIT;
 	Motor.setPWM = pwm;
 }

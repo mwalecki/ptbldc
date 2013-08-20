@@ -77,7 +77,7 @@ int main(void)
 	CANMode = IN_ReadMode();
 	NFv2_CrcInit();
 	PID_Init(&PID[0]);
-//	PID_Init(&PID[1]);
+	PID_Init(&PID[1]);
 //	PID_Init(&PID[2]);
 
 	// Execute NFv2_Config() after init of all peripherals. 
@@ -170,6 +170,13 @@ int main(void)
 				PID[0].D_Factor = NFComBuf.SetPositionRegulator.data[0].d;
 				PID_Init(&PID[0]);
 				NFComBuf.SetPositionRegulator.updated = 0;
+			}
+			if(NFComBuf.SetCurrentRegulator.updated){
+				PID[1].P_Factor = NFComBuf.SetCurrentRegulator.data[0].p;
+				PID[1].I_Factor = NFComBuf.SetCurrentRegulator.data[0].i;
+				PID[1].D_Factor = NFComBuf.SetCurrentRegulator.data[0].d;
+				PID_Init(&PID[1]);
+				NFComBuf.SetCurrentRegulator.updated = 0;
 			}
 			NFComBuf.dataReceived = 0;
 		}
@@ -286,6 +293,7 @@ void SystemMonitor(void){
 		switch(Motor.mode){
 			case NF_DrivesMode_ERROR:		LED_Set(LED_DIGIT, LED_symE, 0); break;
 			case NF_DrivesMode_PWM:			LED_Set(LED_DIGIT, LED_symt, 0); break;
+			case NF_DrivesMode_CURRENT:		LED_Set(LED_DIGIT, LED_symC, 0); break;
 			case NF_DrivesMode_SPEED:		LED_Set(LED_DIGIT, LED_symS, 0); break;
 			case NF_DrivesMode_POSITION:	LED_Set(LED_DIGIT, LED_symP, 0); break;
 			case NF_DrivesMode_SYNC_POS0:	LED_Set(LED_DIGIT, LED_symb, 0); break;

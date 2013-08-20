@@ -56,7 +56,7 @@ void  ENCODER1_Config(void) {
 	TIM_ICInit(TIM2, &TIM_ICInitStructure);
 
 	// Encoder Interface Config
-	if(Commutator.polarity == 0)
+	if(Commutator.encoderPolarity == 0)
 		TIM_EncoderInterfaceConfig(TIM2, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Falling);
 	else
 		TIM_EncoderInterfaceConfig(TIM2, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
@@ -82,8 +82,6 @@ void  ENCODER1_Config(void) {
 	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
 	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&EXTI_InitStructure);
-
-	Commutator.encoderResolution = ENCODER_RESOLUTION;
 }
 
 /**

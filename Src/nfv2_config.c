@@ -8,15 +8,16 @@ void NFv2_Config(NF_STRUCT_ComBuf *NFComBuf, uint8_t myAddress){
 
 	NFComBuf->myAddress = myAddress;
 
-	NFComBuf->SetCurrentRegulator.data[0].p = PID[0].P_Factor;
-	NFComBuf->SetCurrentRegulator.data[0].i = PID[0].I_Factor;
-	NFComBuf->SetCurrentRegulator.data[0].d = PID[0].D_Factor;
-	NFComBuf->SetSpeedRegulator.data[0].p = PID[0].P_Factor;
-	NFComBuf->SetSpeedRegulator.data[0].i = PID[0].I_Factor;
-	NFComBuf->SetSpeedRegulator.data[0].d = PID[0].D_Factor;
 	NFComBuf->SetPositionRegulator.data[0].p = PID[0].P_Factor;
 	NFComBuf->SetPositionRegulator.data[0].i = PID[0].I_Factor;
 	NFComBuf->SetPositionRegulator.data[0].d = PID[0].D_Factor;
+	NFComBuf->SetCurrentRegulator.data[0].p = PID[1].P_Factor;
+	NFComBuf->SetCurrentRegulator.data[0].i = PID[1].I_Factor;
+	NFComBuf->SetCurrentRegulator.data[0].d = PID[1].D_Factor;
+
+//	NFComBuf->SetSpeedRegulator.data[0].p = PID[0].P_Factor;
+//	NFComBuf->SetSpeedRegulator.data[0].i = PID[0].I_Factor;
+//	NFComBuf->SetSpeedRegulator.data[0].d = PID[0].D_Factor;
 
 	NFComBuf->dataReceived = 1;
 

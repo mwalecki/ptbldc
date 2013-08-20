@@ -27,7 +27,8 @@ void ADCwithDMA_Config(void){
 	// Data direction: Peripheral is source
 	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
 	// Data Buffer Size
-	DMA_InitStructure.DMA_BufferSize = 9;
+//	DMA_InitStructure.DMA_BufferSize = 9;
+	DMA_InitStructure.DMA_BufferSize = 8;
 	// Do not increment Peripheral Address Register
 	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
 	// Do increment destination memory pointer
@@ -55,21 +56,35 @@ void ADCwithDMA_Config(void){
 	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
 	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
 	// number of ADC channels that will be converted using the sequencer
-	ADC_InitStructure.ADC_NbrOfChannel = 9;
+//	ADC_InitStructure.ADC_NbrOfChannel = 9;
+	ADC_InitStructure.ADC_NbrOfChannel = 8;
 	ADC_Init(ADC1, &ADC_InitStructure);
 	/* ADC1 regular channels configuration */ 
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 1, ADC_SampleTime_71Cycles5); //AIN0
 	ADC_RegularChannelConfig(ADC1, ADC_Channel_11, 2, ADC_SampleTime_71Cycles5); //AIN1
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_4, 3, ADC_SampleTime_71Cycles5); //MOTORCURRENT
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_5, 4, ADC_SampleTime_71Cycles5); //THERM0
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_6, 5, ADC_SampleTime_71Cycles5); //THERM1
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_14, 6, ADC_SampleTime_71Cycles5); //PVCC
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_15, 7, ADC_SampleTime_71Cycles5); //24V
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 8, ADC_SampleTime_71Cycles5); //12V
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_9, 9, ADC_SampleTime_71Cycles5); //5V
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_5, 3, ADC_SampleTime_71Cycles5); //THERM0
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_6, 4, ADC_SampleTime_71Cycles5); //THERM1
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_14, 5, ADC_SampleTime_71Cycles5); //PVCC
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_15, 6, ADC_SampleTime_71Cycles5); //24V
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 7, ADC_SampleTime_71Cycles5); //12V
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_9, 8, ADC_SampleTime_71Cycles5); //5V
+//	ADC_RegularChannelConfig(ADC1, ADC_Channel_4, 9, ADC_SampleTime_71Cycles5); //MOTORCURRENT
 	/* Enable ADC1 DMA */
 	ADC_DMACmd(ADC1, ENABLE);
 	
+
+	// INJECTED
+	/* Set injected sequencer length */
+	ADC_InjectedSequencerLengthConfig(ADC1, 1);
+	/* ADC1 injected channel Configuration */
+	ADC_InjectedChannelConfig(ADC1, ADC_Channel_4, 1, ADC_SampleTime_71Cycles5);
+	/* ADC1 injected external trigger configuration */
+	ADC_ExternalTrigInjectedConvConfig(ADC1, ADC_ExternalTrigInjecConv_T1_TRGO);
+
+	ADC_ExternalTrigInjectedConvCmd(ADC1, ENABLE);
+
+
+
 	/* Enable ADC1 */
 	ADC_Cmd(ADC1, ENABLE);
 	
@@ -90,6 +105,11 @@ void ADCwithDMA_Config(void){
 	ADC.unitsOffset = 0;
 	ADC.logicZeroMax_mV = 6000;
 	ADC.logicOneMin_mV = 18000;
+
+	ADC.currentMeasure_uVoltsPerUnit = 1217;
+	ADC.currentMeasure_unitsOffset = 12;
+	ADC.currentMeasure_uAmperesPermV = 5405;
+	ADC.currentMeasure_mVOffset = 500;
 }
 
 void DMA1_Channel1_IRQHandler(void)
@@ -98,7 +118,7 @@ void DMA1_Channel1_IRQHandler(void)
 	s16 raw;
 
 	DMA_ClearITPendingBit(DMA1_IT_TC1);
-	for(i=0; i<ADC_Channels; i++){
+	for(i=0; i<ADC_VoltageChannels; i++){
 		raw = ADC.raw[i] - ADC.unitsOffset;
 		if(raw < 0)
 			raw = 0;

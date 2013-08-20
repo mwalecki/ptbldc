@@ -11,8 +11,9 @@
 #define SYNCHRONIZATION_INCREMENT 	(5*PRECISE_INCREMENT_UNIT)
 #define POSITION_MAX_INCREMENT		(70*PRECISE_INCREMENT_UNIT)
 
-#define TIM1PERIOD	1000
-#define MAX_PWM		TIM1PERIOD
+#define TIM1PERIOD	600
+#define TIM1MAX_CCR	500
+// Software value of PWM is divided by 2 before put into CCRx
 #define SET_PWM_LIMIT 1000
 
 #define MOTOR1A_GPIO	GPIOB
@@ -34,6 +35,7 @@
 
 
 typedef struct{
+	uint8_t positionCurrentcascade;
 	uint8_t mode;
 	uint8_t previousMode;
 	int16_t setPWM;

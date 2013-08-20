@@ -17,7 +17,7 @@
 
 	#define NF_BUFSZ_SetDrivesMode			2
 	#define NF_BUFSZ_SetDrivesSpeed			2
-//	#define NF_BUFSZ_SetDrivesCurrent		2
+	#define NF_BUFSZ_SetDrivesCurrent		2
 	#define NF_BUFSZ_SetDrivesPosition		2
 	#define NF_BUFSZ_SetDrivesPWM			2
 	#define NF_BUFSZ_SetDrivesMaxCurrent	2
