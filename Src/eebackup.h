@@ -61,6 +61,10 @@
 #define EEADDR_MOT_PID_CASC 47
 #define EEADDR_COMM_MODE 48
 
+#define EEADDR_MOTOR_REMAP1 49
+#define EEADDR_MOTOR_REMAP2 50
+#define EEADDR_MOTOR_REMAP3 51
+
 void eebackup_Recover(void);	
 void eebackup_SaveAll(void);
 void eebackup_SaveInitialValues(void);

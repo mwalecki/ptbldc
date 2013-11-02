@@ -38,6 +38,10 @@ void eebackup_Recover(void)
 	Motor.positionCurrentcascade = EEPROM_Read(EEADDR_MOT_PID_CASC);
 	Commutator.encoderResolution = EEPROM_Read(EEADDR_ENC_RESOLUTION);
 	Commutator.commutationMode = EEPROM_Read(EEADDR_COMM_MODE);
+
+	Commutator.motorWireRemap1 = EEPROM_Read(EEADDR_MOTOR_REMAP1);
+	Commutator.motorWireRemap2 = EEPROM_Read(EEADDR_MOTOR_REMAP2);
+	Commutator.motorWireRemap3 = EEPROM_Read(EEADDR_MOTOR_REMAP3);
 }
 
 void eebackup_SaveAll(void)
@@ -65,6 +69,10 @@ void eebackup_SaveAll(void)
 	EEPROM_Write(EEADDR_MOT_PID_CASC, (u16) Motor.positionCurrentcascade);
 	EEPROM_Write(EEADDR_ENC_RESOLUTION, (u16) Commutator.encoderResolution);
 	EEPROM_Write(EEADDR_COMM_MODE, (u16) Commutator.commutationMode);
+
+	EEPROM_Write(EEADDR_MOTOR_REMAP1, (u16) Commutator.motorWireRemap1);
+	EEPROM_Write(EEADDR_MOTOR_REMAP2, (u16) Commutator.motorWireRemap2);
+	EEPROM_Write(EEADDR_MOTOR_REMAP3, (u16) Commutator.motorWireRemap3);
 }
 
 void eebackup_SaveInitialValues(void)

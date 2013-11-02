@@ -205,6 +205,12 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 			Commutator.commutationMode = COMM_MODE_NONE;
 		else
 		_GET_SET_MEMBER(Commutator.advanceCoeff, ":ADV")
+		else
+		_GET_SET_MEMBER(Commutator.motorWireRemap1, ":REM1")
+		else
+		_GET_SET_MEMBER(Commutator.motorWireRemap2, ":REM2")
+		else
+		_GET_SET_MEMBER(Commutator.motorWireRemap3, ":REM3")
 	_ENDGROUP
 
 	else

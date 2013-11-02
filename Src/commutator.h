@@ -23,6 +23,9 @@ enum direction {NONE=0, FORWARD, REVERSE};
 typedef struct{
 	uint8_t commutationMode;
 	uint8_t encoderPolarity;
+	uint8_t motorWireRemap1;
+	uint8_t motorWireRemap2;
+	uint8_t motorWireRemap3;
 	int32_t previousEncPos;
 	int32_t currentEncPos;
 	int32_t currentRotorPos;

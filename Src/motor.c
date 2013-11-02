@@ -750,6 +750,144 @@ void TIM1_CC_IRQHandler(void)
 				}
 			}
 		}
+		else if((Commutator.commutationMode == COMM_MODE_NONE)){
+
+			BH1 = BH2 = BH3 = 0;
+			BL1 = BL2 = BL3 = 0;
+
+			if(Motor.setPWM == 0){
+				pwm = 0;
+				switch(Commutator.motorWireRemap1){
+				case 2:
+					BH2 = 0;
+					BL2 = 1;
+					break;
+				case 3:
+					BH3 = 0;
+					BL3 = 1;
+					break;
+				default:
+					BH1 = 0;
+					BL1 = 1;
+					break;
+				}
+				switch(Commutator.motorWireRemap2){
+				case 1:
+					BH1 = 0;
+					BL1 = 1;
+					break;
+				case 3:
+					BH3 = 0;
+					BL3 = 1;
+					break;
+				default:
+					BH2 = 0;
+					BL2 = 1;
+					break;
+				}
+			}
+			else if(Motor.setPWM > 0){
+				pwm = Motor.setPWM;
+				switch(Commutator.motorWireRemap1){
+				case 2:
+					BH2 = 1;
+					BL2 = 0;
+					break;
+				case 3:
+					BH3 = 1;
+					BL3 = 0;
+					break;
+				default:
+					BH1 = 1;
+					BL1 = 0;
+					break;
+				}
+				switch(Commutator.motorWireRemap2){
+				case 1:
+					BH1 = 0;
+					BL1 = 1;
+					break;
+				case 3:
+					BH3 = 0;
+					BL3 = 1;
+					break;
+				default:
+					BH2 = 0;
+					BL2 = 1;
+					break;
+				}
+			}
+			else{
+				pwm = - Motor.setPWM;
+				switch(Commutator.motorWireRemap1){
+				case 2:
+					BH2 = 0;
+					BL2 = 1;
+					break;
+				case 3:
+					BH3 = 0;
+					BL3 = 1;
+					break;
+				default:
+					BH1 = 0;
+					BL1 = 1;
+					break;
+				}
+				switch(Commutator.motorWireRemap2){
+				case 1:
+					BH1 = 1;
+					BL1 = 0;
+					break;
+				case 3:
+					BH3 = 1;
+					BL3 = 0;
+					break;
+				default:
+					BH2 = 1;
+					BL2 = 0;
+					break;
+				}
+			}
+
+			// Bridge FETs for Motor Phase U
+			if (BH1) {
+				TIM1->CCR1 = pwm>>1;
+				TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+			} else {
+				TIM1->CCR1 = 0;
+				if (BL1){
+					TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+				} else {
+					TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
+				}
+			}
+
+			// Bridge FETs for Motor Phase V
+			if (BH2) {
+				TIM1->CCR2 = pwm>>1;
+				TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+			} else {
+				TIM1->CCR2 = 0;
+				if (BL2){
+					TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+				} else {
+					TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
+				}
+			}
+
+			// Bridge FETs for Motor Phase W
+			if (BH3) {
+				TIM1->CCR3 = pwm>>1;
+				TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+			} else {
+				TIM1->CCR3 = 0;
+				if (BL3){
+					TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+				} else {
+					TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+				}
+			}
+		}
 		else{
 
 			// Bridge FETs for Motor Phase U
