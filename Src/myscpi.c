@@ -110,8 +110,11 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 
 	else
 	_GROUP(":PWM")
-		_GET_SET_MEMBER(NFComBuf.SetDrivesPWM.data[0], "")
-		MOTOR_SetPWM(NFComBuf.SetDrivesPWM.data[0]);
+		_GET_SET_MEMBER(Motor.maxPWM, ":MAX")
+		else
+		_GET_SETANDDO_MEMBER(NFComBuf.SetDrivesPWM.data[0], ":SET")
+			MOTOR_SetPWM(NFComBuf.SetDrivesPWM.data[0]);
+		_END_GET_SETANDDO_MEMBER
 	_ENDGROUP
 
 	else
@@ -205,6 +208,32 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 			Commutator.commutationMode = COMM_MODE_NONE;
 		else
 		_GET_SET_MEMBER(Commutator.advanceCoeff, ":ADV")
+		else
+		_GET_SET_MEMBER(Commutator.motorWireRemap1, ":REM1")
+		else
+		_GET_SET_MEMBER(Commutator.motorWireRemap2, ":REM2")
+		else
+		_GET_SET_MEMBER(Commutator.motorWireRemap3, ":REM3")
+	_ENDGROUP
+
+	else
+	_GROUP(":IN")
+		_GET_SET_MEMBER(Motor.switchPolarityHome, ":POL:HOM")
+		else
+		_GET_SET_MEMBER(Motor.switchPolarityUp, ":POL:POS")
+		else
+		_GET_SET_MEMBER(Motor.switchPolarityDown, ":POL:NEG")
+		else
+		_GET_SET_MEMBER(Motor.switchPullupHome, ":PULL:HOM")
+		else
+		_GET_SET_MEMBER(Motor.switchPullupUp, ":PULL:POS")
+		else
+		_GET_SET_MEMBER(Motor.switchPullupDown, ":PULL:NEG")
+	_ENDGROUP
+
+	else
+	_GROUP(":SYNC")
+		_GET_SET_MEMBER(Motor.synchroIncrement, ":SP")
 	_ENDGROUP
 
 	else

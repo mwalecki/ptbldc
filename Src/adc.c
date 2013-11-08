@@ -7,6 +7,21 @@ extern NF_STRUCT_ComBuf 	NFComBuf;
 void ADCwithDMA_Config(void){
 	ADC_InitTypeDef ADC_InitStructure;
 	DMA_InitTypeDef DMA_InitStructure;
+	GPIO_InitTypeDef GPIO_InitStructure;
+
+	// AFIO Clock Enable
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+	// GPIO clocks enable
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+
+	/*	PORT A Floating Inputs:				*\
+		PA.4	Current1
+		PA.5	Current2					*/
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_5;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
 	
 	//DMA 
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE); 
@@ -75,9 +90,10 @@ void ADCwithDMA_Config(void){
 
 	// INJECTED
 	/* Set injected sequencer length */
-	ADC_InjectedSequencerLengthConfig(ADC1, 1);
+	ADC_InjectedSequencerLengthConfig(ADC1, 2);
 	/* ADC1 injected channel Configuration */
 	ADC_InjectedChannelConfig(ADC1, ADC_Channel_4, 1, ADC_SampleTime_71Cycles5);
+	ADC_InjectedChannelConfig(ADC1, ADC_Channel_5, 2, ADC_SampleTime_71Cycles5);
 	/* ADC1 injected external trigger configuration */
 	ADC_ExternalTrigInjectedConvConfig(ADC1, ADC_ExternalTrigInjecConv_T1_TRGO);
 

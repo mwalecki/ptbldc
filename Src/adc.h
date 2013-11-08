@@ -7,7 +7,7 @@
 #define ADC_DMA_TransferCompleteInterrupt
 
 #define ADC_VoltageChannels 8
-#define ADC_CurrentChannels 1
+#define ADC_CurrentChannels 2
 #define ADC_DigitalBytes ((ADC_VoltageChannels-1)/8 + 1)
 
 typedef struct{

@@ -8,8 +8,8 @@
 #define PRECISE_INCREMENT_UNIT	1000
 // Speed command sets increment in [motors/s] = [0.001motors/(regulator period)]
 
-#define SYNCHRONIZATION_INCREMENT 	(5*PRECISE_INCREMENT_UNIT)
-#define POSITION_MAX_INCREMENT		(70*PRECISE_INCREMENT_UNIT)
+//#define SYNCHRONIZATION_INCREMENT 	(5*PRECISE_INCREMENT_UNIT)
+#define POSITION_MAX_INCREMENT			(70*PRECISE_INCREMENT_UNIT)
 
 #define TIM1PERIOD	600
 #define TIM1MAX_CCR	500
@@ -53,6 +53,14 @@ typedef struct{
 	uint8_t limitSwitchDown;
 	uint8_t switchHome;
 	uint8_t enableSignal;
+	uint16_t maxPWM;
+	uint8_t switchPolarityHome;
+	uint8_t switchPolarityUp;
+	uint8_t switchPolarityDown;
+	uint8_t switchPullupHome;
+	uint8_t switchPullupUp;
+	uint8_t switchPullupDown;
+	int16_t synchroIncrement;
 } MOTOR_St;
 
 //##                                      #### ######## ################ PROTOTYPES:
