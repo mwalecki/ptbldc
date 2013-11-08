@@ -219,9 +219,9 @@ void MOTOR_Proc(void) {
 	Motor.currentPosition = ENCODER1_Position();
 	Motor.currentIncrement = Motor.currentPosition - Motor.previousPosition;
 	Motor.enableSignal = (IN_ReadENABLE() == 0) ? 1 : 0;
-	Motor.limitSwitchUp = (IN_ReadLIMITPOS() == 0) ? 1 : 0;
-	Motor.limitSwitchDown = (IN_ReadLIMITNEG() == 0) ? 1 : 0;
-	Motor.switchHome = (IN_ReadHOME() == 0) ? 1 : 0;
+	Motor.limitSwitchUp = IN_ReadLIMITPOS();
+	Motor.limitSwitchDown = IN_ReadLIMITNEG();
+	Motor.switchHome = IN_ReadHOME();
 
 	Motor.previousMode = Motor.mode;
 	Motor.mode = NFComBuf.SetDrivesMode.data[0];
@@ -247,7 +247,8 @@ void MOTOR_Proc(void) {
 		motorPositionToPWM();
 		break;
 	case NF_DrivesMode_PWM:
-		Motor.setPWM = NFComBuf.SetDrivesPWM.data[0];
+		//Motor.setPWM = NFComBuf.SetDrivesPWM.data[0];
+		MOTOR_SetPWM(NFComBuf.SetDrivesPWM.data[0]);
 		motorPWMpositionLimit();
 		break;
 	case NF_DrivesMode_CURRENT:
@@ -283,13 +284,13 @@ inline void motorSetSynchronizationSpeed(void) {
 		Motor.setIncrement = 0;
 		return;
 	}
-	if(IN_ReadHOME()){
+	if(IN_ReadHOME() == 0){
 		homeAreaChecked = 1;
 //		if(Motor.setIncrement < SYNCHRONIZATION_INCREMENT)
 //			Motor.setIncrement ++;
 //		else if(Motor.setIncrement > SYNCHRONIZATION_INCREMENT)
 //			Motor.setIncrement --;
-		Motor.setIncrement = SYNCHRONIZATION_INCREMENT;
+		Motor.setIncrement = Motor.synchroIncrement;
 	}
 	else {
 		if(homeAreaChecked){
@@ -300,7 +301,7 @@ inline void motorSetSynchronizationSpeed(void) {
 //			Motor.setIncrement ++;
 //		else if(Motor.setIncrement > - SYNCHRONIZATION_INCREMENT)
 //			Motor.setIncrement --;
-		Motor.setIncrement = - SYNCHRONIZATION_INCREMENT;
+		Motor.setIncrement = - Motor.synchroIncrement;
 	}
 }
 
@@ -386,19 +387,19 @@ inline void motorPositionToPWM(void) {
 	PID[0].inputValue = PID_Controller(&PID[0]);
 
 	// #### Motor set input
-	if(PID[0].inputValue < -SET_PWM_LIMIT)
-		Motor.setPWM = -SET_PWM_LIMIT;
-	else if(PID[0].inputValue > SET_PWM_LIMIT)
-		Motor.setPWM = SET_PWM_LIMIT;
+	if(PID[0].inputValue < -Motor.maxPWM)
+		Motor.setPWM = -Motor.maxPWM;
+	else if(PID[0].inputValue > Motor.maxPWM)
+		Motor.setPWM = Motor.maxPWM;
 	else
 		Motor.setPWM = PID[0].inputValue;
     PID[0].lastProcessValue = Motor.setPWM;
 
 	// Do some magic to limit integrated error
-	if(PID[0].sumError > SET_PWM_LIMIT)
-		PID[0].sumError = SET_PWM_LIMIT;
-	else if(PID[0].sumError < -SET_PWM_LIMIT)
-		PID[0].sumError = -SET_PWM_LIMIT;
+	if(PID[0].sumError > Motor.maxPWM)
+		PID[0].sumError = Motor.maxPWM;
+	else if(PID[0].sumError < -Motor.maxPWM)
+		PID[0].sumError = -Motor.maxPWM;
 	// And magic continues to make PWM fade out as much as possible
     if(PID[0].sumError > 0)
         PID[0].sumError --;
@@ -520,7 +521,7 @@ void MOTOR_Config(void) {
 	// Center aligned mode 2, CMS = "10"
 	// The Output compare interrupt flag is set when the counter counts up
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_CenterAligned2;
-	TIM_TimeBaseStructure.TIM_Period = 600;		// 24MHz / 2 * SET_PWM_LIMIT = 20kHz
+	TIM_TimeBaseStructure.TIM_Period = 600;		// 24MHz / 2 * Motor.maxPWM = 20kHz
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
 	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
@@ -551,7 +552,7 @@ void MOTOR_Config(void) {
 	TIM_OC2PreloadConfig(TIM1, TIM_OCPreload_Enable);
 	TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
  
-	/* automatic output enable, break off, dead time ca. SET_PWM_LIMITns and
+	/* automatic output enable, break off, dead time ca. Motor.maxPWMns and
 	// no lock of configuration */
 	TIM_BDTRInitStructure.TIM_OSSRState = TIM_OSSRState_Enable;
 	TIM_BDTRInitStructure.TIM_OSSIState = TIM_OSSIState_Enable;
@@ -588,6 +589,10 @@ void MOTOR_Config(void) {
 	// enable motor timer main output (the bridge signals)
 	TIM_CtrlPWMOutputs(TIM1, ENABLE);
 
+	// Set default max PWM value if not defined
+	if(Motor.maxPWM > SET_PWM_LIMIT)
+		Motor.maxPWM = SET_PWM_LIMIT;
+
 	// Data structures init
 	Motor.setPWM = 0;
 	Motor.setIncrement = 0;
@@ -622,19 +627,19 @@ void TIM1_CC_IRQHandler(void)
 			PID[1].inputValue = PID_Controller(&PID[1]);
 
 			// #### Motor set input
-			if(PID[1].inputValue < -SET_PWM_LIMIT)
-				Motor.setPWM = -SET_PWM_LIMIT;
-			else if(PID[0].inputValue > SET_PWM_LIMIT)
-				Motor.setPWM = SET_PWM_LIMIT;
+			if(PID[1].inputValue < -Motor.maxPWM)
+				Motor.setPWM = -Motor.maxPWM;
+			else if(PID[0].inputValue > Motor.maxPWM)
+				Motor.setPWM = Motor.maxPWM;
 			else
 				Motor.setPWM = PID[1].inputValue;
 		    PID[0].lastProcessValue = Motor.setPWM;
 
 			// Do some magic to limit integrated error
-			if(PID[1].sumError > SET_PWM_LIMIT)
-				PID[1].sumError = SET_PWM_LIMIT;
-			else if(PID[1].sumError < -SET_PWM_LIMIT)
-				PID[1].sumError = -SET_PWM_LIMIT;
+			if(PID[1].sumError > Motor.maxPWM)
+				PID[1].sumError = Motor.maxPWM;
+			else if(PID[1].sumError < -Motor.maxPWM)
+				PID[1].sumError = -Motor.maxPWM;
 			// And magic continues to make PWM fade out as much as possible
 		    if(PID[1].sumError > 0)
 		        PID[1].sumError --;
@@ -678,11 +683,11 @@ void TIM1_CC_IRQHandler(void)
 
 
 			//NFComBuf.ReadDeviceVitals.data[0] = Commutator.currentHallPattern;
-			NFComBuf.ReadDeviceVitals.data[1] = Commutator.zeroRotorPos;
-			NFComBuf.ReadDeviceVitals.data[2] = Commutator.currentRotorPos;
-			NFComBuf.ReadDeviceVitals.data[3] = pwm1;
-			NFComBuf.ReadDeviceVitals.data[4] = pwm2;
-			NFComBuf.ReadDeviceVitals.data[5] = pwm3;
+//			NFComBuf.ReadDeviceVitals.data[1] = Commutator.zeroRotorPos;
+//			NFComBuf.ReadDeviceVitals.data[2] = Commutator.currentRotorPos;
+//			NFComBuf.ReadDeviceVitals.data[3] = pwm1;
+//			NFComBuf.ReadDeviceVitals.data[4] = pwm2;
+//			NFComBuf.ReadDeviceVitals.data[5] = pwm3;
 
 		}
 		else if((Commutator.commutationMode == COMM_MODE_SINE) || (Commutator.commutationMode == COMM_MODE_BLOCK)){
@@ -922,16 +927,29 @@ void TIM1_CC_IRQHandler(void)
 		raw = 0;
 	ADC.currentMeasure_miliampere[0] = raw * ADC.currentMeasure_uAmperesPermV / 1000;
 
+	raw = ADC1->JDR2 - ADC.currentMeasure_unitsOffset;
+	if(raw < 0)
+		raw = 0;
+	ADC.currentMeasure_milivolt[1] = raw * ADC.currentMeasure_uVoltsPerUnit / 1000;
+	raw = ADC.currentMeasure_milivolt[1] - ADC.currentMeasure_mVOffset;
+	if(raw < 0)
+		raw = 0;
+	ADC.currentMeasure_miliampere[1] = raw * ADC.currentMeasure_uAmperesPermV / 1000;
 
-	NFComBuf.ReadDeviceVitals.data[5] = ADC1->JDR1;
-	NFComBuf.ReadDeviceVitals.data[6] = ADC.currentMeasure_milivolt[0];
-	NFComBuf.ReadDeviceVitals.data[7] = ADC.currentMeasure_miliampere[0];
+
+	NFComBuf.ReadDeviceVitals.data[2] = ADC1->JDR1;
+	NFComBuf.ReadDeviceVitals.data[3] = ADC.currentMeasure_milivolt[0];
+	NFComBuf.ReadDeviceVitals.data[4] = ADC.currentMeasure_miliampere[0];
+
+	NFComBuf.ReadDeviceVitals.data[5] = ADC1->JDR2;
+	NFComBuf.ReadDeviceVitals.data[6] = ADC.currentMeasure_milivolt[1];
+	NFComBuf.ReadDeviceVitals.data[7] = ADC.currentMeasure_miliampere[1];
 }
 
 void MOTOR_SetPWM(s16 pwm) {
-	if(pwm > SET_PWM_LIMIT)
-		pwm = SET_PWM_LIMIT;
-	else if(pwm < -SET_PWM_LIMIT)
-		pwm = -SET_PWM_LIMIT;
+	if(pwm > Motor.maxPWM)
+		pwm = Motor.maxPWM;
+	else if(pwm < -Motor.maxPWM)
+		pwm = -Motor.maxPWM;
 	Motor.setPWM = pwm;
 }

@@ -42,6 +42,18 @@ void eebackup_Recover(void)
 	Commutator.motorWireRemap1 = EEPROM_Read(EEADDR_MOTOR_REMAP1);
 	Commutator.motorWireRemap2 = EEPROM_Read(EEADDR_MOTOR_REMAP2);
 	Commutator.motorWireRemap3 = EEPROM_Read(EEADDR_MOTOR_REMAP3);
+
+	Motor.maxPWM = EEPROM_Read(EEADDR_MOTOR_MAXPWM);
+
+	Motor.switchPolarityHome = EEPROM_Read(EEADDR_SW_POL_HOME);
+	Motor.switchPolarityUp = EEPROM_Read(EEADDR_SW_POL_UP);
+	Motor.switchPolarityDown = EEPROM_Read(EEADDR_SW_POL_DOWN);
+
+	Motor.switchPullupHome = EEPROM_Read(EEADDR_SW_PULLUP_HOME);
+	Motor.switchPullupUp = EEPROM_Read(EEADDR_SW_PULLUP_UP);
+	Motor.switchPullupDown = EEPROM_Read(EEADDR_SW_PULLUP_DOWN);
+
+	Motor.synchroIncrement = EEPROM_Read(EEADDR_SYNCHRO_SPEED);
 }
 
 void eebackup_SaveAll(void)
@@ -73,6 +85,18 @@ void eebackup_SaveAll(void)
 	EEPROM_Write(EEADDR_MOTOR_REMAP1, (u16) Commutator.motorWireRemap1);
 	EEPROM_Write(EEADDR_MOTOR_REMAP2, (u16) Commutator.motorWireRemap2);
 	EEPROM_Write(EEADDR_MOTOR_REMAP3, (u16) Commutator.motorWireRemap3);
+
+	EEPROM_Write(EEADDR_MOTOR_MAXPWM, (u16) Motor.maxPWM);
+
+	EEPROM_Write(EEADDR_SW_POL_HOME, (u16) Motor.switchPolarityHome);
+	EEPROM_Write(EEADDR_SW_POL_UP, (u16) Motor.switchPolarityUp);
+	EEPROM_Write(EEADDR_SW_POL_DOWN, (u16) Motor.switchPolarityDown);
+
+	EEPROM_Write(EEADDR_SW_PULLUP_HOME, (u16) Motor.switchPullupHome);
+	EEPROM_Write(EEADDR_SW_PULLUP_UP, (u16) Motor.switchPullupUp);
+	EEPROM_Write(EEADDR_SW_PULLUP_DOWN, (u16) Motor.switchPullupDown);
+
+	EEPROM_Write(EEADDR_SYNCHRO_SPEED, (u16) Motor.synchroIncrement);
 }
 
 void eebackup_SaveInitialValues(void)

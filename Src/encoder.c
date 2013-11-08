@@ -20,13 +20,13 @@ void  ENCODER1_Config(void) {
 	// GPIO clocks enable
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 
-	/*	PORT A Floating Inputs:				*\
+	/*	PORT A PullUp Inputs:				*\
 		PA.0	EncA
 		PA.1	EncB
 		PA.2	EncI						*/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 	// TIM2 clock enable

@@ -65,6 +65,17 @@
 #define EEADDR_MOTOR_REMAP2 50
 #define EEADDR_MOTOR_REMAP3 51
 
+#define EEADDR_MOTOR_MAXPWM 52
+
+#define EEADDR_SW_POL_HOME 53
+#define EEADDR_SW_POL_UP 54
+#define EEADDR_SW_POL_DOWN 55
+#define EEADDR_SW_PULLUP_HOME 56
+#define EEADDR_SW_PULLUP_UP 57
+#define EEADDR_SW_PULLUP_DOWN 58
+
+#define EEADDR_SYNCHRO_SPEED 59
+
 void eebackup_Recover(void);	
 void eebackup_SaveAll(void);
 void eebackup_SaveInitialValues(void);

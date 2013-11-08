@@ -1,4 +1,7 @@
 #include "io.h"
+#include "motor.h"
+
+extern MOTOR_St				Motor;
 
 uint8_t outSetByte = 0;
 
@@ -116,19 +119,21 @@ void IN_Config(void){
 		PA.3	LIM_POS					*/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
-	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_InitStructure.GPIO_Mode = ((Motor.switchPullupUp == 1) ? GPIO_Mode_IPU : GPIO_Mode_IN_FLOATING);
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 	/*	PORT C 10MHz Inputs Floating:	*\
-		PC.2	HOME
-		PC.3	LIM_NEG					*/
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3;
+		PC.2	HOME					*/
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
-	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_InitStructure.GPIO_Mode = ((Motor.switchPullupHome == 1) ? GPIO_Mode_IPU : GPIO_Mode_IN_FLOATING);
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+	/*	PORT C 10MHz Inputs Floating:	*\
+		PC.3	LIM_NEG					*/
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+	GPIO_InitStructure.GPIO_Mode = ((Motor.switchPullupDown == 1) ? GPIO_Mode_IPU : GPIO_Mode_IN_FLOATING);
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 }
 
@@ -159,7 +164,7 @@ uint8_t OUT_Read(void){
 }
 
 uint8_t IN_ReadHOME(void){
-	return GPIO_ReadInputDataBit(IN_HOME_GPIO, IN_HOME_PIN);
+	return (GPIO_ReadInputDataBit(IN_HOME_GPIO, IN_HOME_PIN) ^ (Motor.switchPolarityHome & 0x01));
 }
 
 uint8_t IN_ReadENABLE(void){
@@ -167,11 +172,11 @@ uint8_t IN_ReadENABLE(void){
 }
 
 uint8_t IN_ReadLIMITPOS(void){
-	return GPIO_ReadInputDataBit(IN_LIM_POS_GPIO, IN_LIM_POS_PIN);
+	return (GPIO_ReadInputDataBit(IN_LIM_POS_GPIO, IN_LIM_POS_PIN) ^ (Motor.switchPolarityUp & 0x01));
 }
 
 uint8_t IN_ReadLIMITNEG(void){
-	return GPIO_ReadInputDataBit(IN_LIM_NEG_GPIO, IN_LIM_NEG_PIN);
+	return (GPIO_ReadInputDataBit(IN_LIM_NEG_GPIO, IN_LIM_NEG_PIN) ^ (Motor.switchPolarityDown & 0x01));
 }
 
 uint8_t IN_ReadAddress(void){
