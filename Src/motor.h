@@ -43,6 +43,7 @@ typedef struct{
 	int32_t setIncrement;
 	int32_t setTargetPosition;
 	int32_t setPosition;
+	int32_t previousSetPosition;
 	int32_t currentIncrement;
 	int32_t previousPosition;
 	int32_t currentPosition;
@@ -61,6 +62,8 @@ typedef struct{
 	uint8_t switchPullupUp;
 	uint8_t switchPullupDown;
 	int16_t synchroIncrement;
+	int16_t speedFFCoefA;
+	int16_t speedFFCoefB;
 } MOTOR_St;
 
 //##                                      #### ######## ################ PROTOTYPES:
@@ -71,6 +74,7 @@ inline void motorTargetPositionAndIncrementToPosition(void);
 inline void motorLimitSpeed(void);
 inline void motorLimitPosition(void);
 inline void motorPositionToPWM(void);
+inline void motorSetPositionDerivativeFFAddsToPWM(void);
 inline void motorPWMpositionLimit(void);
 
 void MOTOR_Config(void);

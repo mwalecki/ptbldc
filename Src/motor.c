@@ -215,6 +215,7 @@ extern uint8_t sineTable[COMMUTATION_TABLE_LENGTH * 3] = {
 
 void MOTOR_Proc(void) {
 
+	Motor.previousSetPosition = Motor.setPosition;
 	Motor.previousPosition = Motor.currentPosition;
 	Motor.currentPosition = ENCODER1_Position();
 	Motor.currentIncrement = Motor.currentPosition - Motor.previousPosition;
@@ -231,6 +232,7 @@ void MOTOR_Proc(void) {
 		motorSetSynchronizationSpeed();
 		motorSpeedToPosition();
 		motorPositionToPWM();
+		motorSetPositionDerivativeFFAddsToPWM();
 		break;
 	case NF_DrivesMode_SPEED:
 		Motor.setIncrement = NFComBuf.SetDrivesSpeed.data[0];
@@ -238,6 +240,7 @@ void MOTOR_Proc(void) {
 		motorSpeedToPosition();
 		motorLimitPosition();
 		motorPositionToPWM();
+		motorSetPositionDerivativeFFAddsToPWM();
 		break;
 	case NF_DrivesMode_POSITION:
 		Motor.setTargetPosition = NFComBuf.SetDrivesPosition.data[0];
@@ -245,6 +248,7 @@ void MOTOR_Proc(void) {
 		motorTargetPositionAndIncrementToPosition();
 		motorLimitPosition();
 		motorPositionToPWM();
+		motorSetPositionDerivativeFFAddsToPWM();
 		break;
 	case NF_DrivesMode_PWM:
 		//Motor.setPWM = NFComBuf.SetDrivesPWM.data[0];
@@ -270,6 +274,9 @@ void MOTOR_Proc(void) {
 	NFComBuf.ReadDigitalInputs.data[0] = (Motor.limitSwitchUp ? (1<<0) : 0)
 									|	(Motor.limitSwitchDown ? (1<<1) : 0)
 									|	(Motor.switchHome ? (1<<2) : 0);
+
+	// For regulator tuning purposes
+    NFComBuf.ReadDeviceVitals.data[0] = Motor.setPWM;
 }
 
 inline void motorSetSynchronizationSpeed(void) {
@@ -395,11 +402,18 @@ inline void motorPositionToPWM(void) {
 		Motor.setPWM = PID[0].inputValue;
     PID[0].lastProcessValue = Motor.setPWM;
 
+#ifdef PID_SUM_ERR_LIMIT
 	// Do some magic to limit integrated error
-	if(PID[0].sumError > Motor.maxPWM)
-		PID[0].sumError = Motor.maxPWM;
-	else if(PID[0].sumError < -Motor.maxPWM)
-		PID[0].sumError = -Motor.maxPWM;
+	if(PID[0].sumError > PID_SUM_ERR_LIMIT)
+		PID[0].sumError = PID_SUM_ERR_LIMIT;
+	else if(PID[0].sumError < -PID_SUM_ERR_LIMIT)
+		PID[0].sumError = -PID_SUM_ERR_LIMIT;
+#endif
+
+    // Or better assume that something's wrong before crash
+//    if(PID[0].sumError > 10000 || PID[0].sumError < -10000)
+//    	NFComBuf.SetDrivesMode.data[0] = NF_DrivesMode_ERROR;
+
 	// And magic continues to make PWM fade out as much as possible
     if(PID[0].sumError > 0)
         PID[0].sumError --;
@@ -409,8 +423,31 @@ inline void motorPositionToPWM(void) {
         PID[0].lastProcessValue --;
     else if(PID[0].lastProcessValue < 0)
         PID[0].lastProcessValue ++;
+}
 
-    //Motor.setPWM = 5 * Motor.setPWM;	// MOTORx_SetInput: -1000 <= inputValue <= 1000
+inline void motorSetPositionDerivativeFFAddsToPWM(void){
+	int16_t ff;
+
+	if((Motor.previousMode != NF_DrivesMode_POSITION)
+			&& (Motor.previousMode != NF_DrivesMode_SPEED)
+			&& (Motor.previousMode != NF_DrivesMode_SYNC_POS0)){
+		Motor.previousSetPosition = Motor.setPosition;
+	}
+
+	if((Motor.speedFFCoefA > 0) && (Motor.speedFFCoefA < 65000)
+			&& (Motor.speedFFCoefB > 0) && (Motor.speedFFCoefB < 65000)
+			&& (Motor.setPosition != Motor.previousSetPosition)){
+		ff = (Motor.setPosition > Motor.previousSetPosition) ?
+				(((Motor.setPosition - Motor.previousSetPosition) * Motor.speedFFCoefA) / 10 + Motor.speedFFCoefB) :
+				(((Motor.setPosition - Motor.previousSetPosition) * Motor.speedFFCoefA) / 10 - Motor.speedFFCoefB);
+		Motor.setPWM += ff;
+	}
+	else return;
+
+	if(Motor.setPWM < -Motor.maxPWM)
+		Motor.setPWM = -Motor.maxPWM;
+	else if(Motor.setPWM > Motor.maxPWM)
+		Motor.setPWM = Motor.maxPWM;
 }
 
 inline void motorPWMpositionLimit(void) {
@@ -937,13 +974,13 @@ void TIM1_CC_IRQHandler(void)
 	ADC.currentMeasure_miliampere[1] = raw * ADC.currentMeasure_uAmperesPermV / 1000;
 
 
-	NFComBuf.ReadDeviceVitals.data[2] = ADC1->JDR1;
-	NFComBuf.ReadDeviceVitals.data[3] = ADC.currentMeasure_milivolt[0];
-	NFComBuf.ReadDeviceVitals.data[4] = ADC.currentMeasure_miliampere[0];
-
-	NFComBuf.ReadDeviceVitals.data[5] = ADC1->JDR2;
-	NFComBuf.ReadDeviceVitals.data[6] = ADC.currentMeasure_milivolt[1];
-	NFComBuf.ReadDeviceVitals.data[7] = ADC.currentMeasure_miliampere[1];
+//	NFComBuf.ReadDeviceVitals.data[2] = ADC1->JDR1;
+//	NFComBuf.ReadDeviceVitals.data[3] = ADC.currentMeasure_milivolt[0];
+//	NFComBuf.ReadDeviceVitals.data[4] = ADC.currentMeasure_miliampere[0];
+//
+//	NFComBuf.ReadDeviceVitals.data[5] = ADC1->JDR2;
+//	NFComBuf.ReadDeviceVitals.data[6] = ADC.currentMeasure_milivolt[1];
+//	NFComBuf.ReadDeviceVitals.data[7] = ADC.currentMeasure_miliampere[1];
 }
 
 void MOTOR_SetPWM(s16 pwm) {

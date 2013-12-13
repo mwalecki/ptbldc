@@ -54,6 +54,9 @@ void eebackup_Recover(void)
 	Motor.switchPullupDown = EEPROM_Read(EEADDR_SW_PULLUP_DOWN);
 
 	Motor.synchroIncrement = EEPROM_Read(EEADDR_SYNCHRO_SPEED);
+
+	Motor.speedFFCoefA = EEPROM_Read(EEADDR_SPEED_FF_COEF_A);
+	Motor.speedFFCoefB = EEPROM_Read(EEADDR_SPEED_FF_COEF_B);
 }
 
 void eebackup_SaveAll(void)
@@ -97,6 +100,9 @@ void eebackup_SaveAll(void)
 	EEPROM_Write(EEADDR_SW_PULLUP_DOWN, (u16) Motor.switchPullupDown);
 
 	EEPROM_Write(EEADDR_SYNCHRO_SPEED, (u16) Motor.synchroIncrement);
+
+	EEPROM_Write(EEADDR_SPEED_FF_COEF_A, (u16) Motor.speedFFCoefA);
+	EEPROM_Write(EEADDR_SPEED_FF_COEF_B, (u16) Motor.speedFFCoefB);
 }
 
 void eebackup_SaveInitialValues(void)

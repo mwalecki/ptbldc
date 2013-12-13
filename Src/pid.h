@@ -28,6 +28,8 @@
 
 #define SCALING_FACTOR  1000
 
+#define PID_SUM_ERR_LIMIT Motor.maxPWM
+
 /*! \brief PID Status
  *
  * Setpoints and data used by the PID control algorithm

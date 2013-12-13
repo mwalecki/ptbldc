@@ -160,6 +160,10 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 			NFComBuf.SetPositionRegulator.updated = 1;
 			NFComBuf.dataReceived = 1;
 		_END_GET_SETANDDO_MEMBER 
+		else
+		_GET_SET_MEMBER(Motor.speedFFCoefA, ":SFFA")
+		else
+		_GET_SET_MEMBER(Motor.speedFFCoefB, ":SFFB")
 	_ENDGROUP
 
 	else
