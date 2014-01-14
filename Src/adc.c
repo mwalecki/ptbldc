@@ -1,8 +1,10 @@
 #include "adc.h"
 #include "nf/nfv2.h"
+#include "motor.h"
 
 extern ADC_St				ADC;
 extern NF_STRUCT_ComBuf 	NFComBuf;
+extern MOTOR_St				Motor;
 
 void ADCwithDMA_Config(void){
 	ADC_InitTypeDef ADC_InitStructure;
@@ -99,7 +101,8 @@ void ADCwithDMA_Config(void){
 
 	ADC_ExternalTrigInjectedConvCmd(ADC1, ENABLE);
 
-
+	/* Enable JEOC interrupt */
+	ADC_ITConfig(ADC1, ADC_IT_JEOC, ENABLE);
 
 	/* Enable ADC1 */
 	ADC_Cmd(ADC1, ENABLE);
@@ -124,8 +127,10 @@ void ADCwithDMA_Config(void){
 
 	ADC.currentMeasure_uVoltsPerUnit = 1217;
 	ADC.currentMeasure_unitsOffset = 12;
-	ADC.currentMeasure_uAmperesPermV = 5405;
-	ADC.currentMeasure_mVOffset = 500;
+	ADC.currentMeasure_mVOffset = 2500;
+	ADC.currentMeasure_uAmperesPermV = -9302;
+	ADC.currentMeasure_miliampereInsensitivity = 10;
+	// 215mV = -2000mA
 }
 
 void DMA1_Channel1_IRQHandler(void)
@@ -147,4 +152,36 @@ void DMA1_Channel1_IRQHandler(void)
 			ADC.digital[i/8] |= (1 << (i%8));
 	}
 //	NFComBuf.ReadDigitalInputs.data[0] = ADC.digital[0];
+}
+
+void ADC1_2_IRQHandler(void)
+{
+	s32 raw;
+	s32 pwm;
+	/* Set PC.06 pin */
+	GPIO_WriteBit(GPIOC, GPIO_Pin_6, Bit_SET);
+	/* Get injected channel11 converted value */
+
+	ADC.currentMeasure_raw[0] = ADC_GetInjectedConversionValue(ADC1, ADC_InjectedChannel_1);
+	raw = ADC.currentMeasure_raw[0] - ADC.currentMeasure_unitsOffset;
+	if(raw < 0)
+		raw = 0;
+	ADC.currentMeasure_milivolt[0] = raw * ADC.currentMeasure_uVoltsPerUnit / 1000;
+	raw = (ADC.currentMeasure_milivolt[0] - ADC.currentMeasure_mVOffset) * ADC.currentMeasure_uAmperesPermV / 1000;
+
+	NFComBuf.ReadDeviceVitals.data[5] = raw;
+
+	if((raw > -ADC.currentMeasure_miliampereInsensitivity) && (raw < ADC.currentMeasure_miliampereInsensitivity))
+		raw = 0;
+
+	ADC.currentMeasure_miliampere[0] = raw;
+
+	NFComBuf.ReadDeviceVitals.data[3] = ADC.currentMeasure_raw[0];
+	NFComBuf.ReadDeviceVitals.data[4] = ADC.currentMeasure_milivolt[0];
+	NFComBuf.ReadDeviceVitals.data[6] = ADC.currentMeasure_miliampere[0];
+	NFComBuf.ReadDeviceVitals.data[7] = -ADC.currentMeasure_miliampere[0];
+	/* Clear ADC1 JEOC pending interrupt bit */
+	ADC_ClearITPendingBit(ADC1, ADC_IT_JEOC);
+	/* Reset PC.06 pin */
+GPIO_WriteBit(GPIOC, GPIO_Pin_6, Bit_RESET);
 }

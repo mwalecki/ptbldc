@@ -554,7 +554,7 @@ void MOTOR_Config(void) {
 	GPIO_Init(GPIOE, &GPIO_InitStructure);
  
 	// Time Base configuration
-	TIM_TimeBaseStructure.TIM_Prescaler = 3;
+	TIM_TimeBaseStructure.TIM_Prescaler = 1;
 	// Center aligned mode 2, CMS = "10"
 	// The Output compare interrupt flag is set when the counter counts up
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_CenterAligned2;
@@ -666,26 +666,26 @@ void TIM1_CC_IRQHandler(void)
 			// #### Motor set input
 			if(PID[1].inputValue < -Motor.maxPWM)
 				Motor.setPWM = -Motor.maxPWM;
-			else if(PID[0].inputValue > Motor.maxPWM)
+			else if(PID[1].inputValue > Motor.maxPWM)
 				Motor.setPWM = Motor.maxPWM;
 			else
 				Motor.setPWM = PID[1].inputValue;
-		    PID[0].lastProcessValue = Motor.setPWM;
+		    PID[1].lastProcessValue = Motor.setPWM;
 
 			// Do some magic to limit integrated error
-			if(PID[1].sumError > Motor.maxPWM)
-				PID[1].sumError = Motor.maxPWM;
-			else if(PID[1].sumError < -Motor.maxPWM)
-				PID[1].sumError = -Motor.maxPWM;
-			// And magic continues to make PWM fade out as much as possible
-		    if(PID[1].sumError > 0)
-		        PID[1].sumError --;
-		    else if(PID[1].sumError < 0)
-		        PID[1].sumError ++;
-		    if(PID[1].lastProcessValue > 0)
-		        PID[1].lastProcessValue --;
-		    else if(PID[1].lastProcessValue < 0)
-		        PID[1].lastProcessValue ++;
+			if(PID[1].sumError > SCALING_FACTOR*Motor.maxPWM)
+				PID[1].sumError = SCALING_FACTOR*Motor.maxPWM;
+			else if(PID[1].sumError < -SCALING_FACTOR*Motor.maxPWM)
+				PID[1].sumError = -SCALING_FACTOR*Motor.maxPWM;
+//			// And magic continues to make PWM fade out as much as possible
+//		    if(PID[1].sumError > 0)
+//		        PID[1].sumError --;
+//		    else if(PID[1].sumError < 0)
+//		        PID[1].sumError ++;
+//		    if(PID[1].lastProcessValue > 0)
+//		        PID[1].lastProcessValue --;
+//		    else if(PID[1].lastProcessValue < 0)
+//		        PID[1].lastProcessValue ++;
 		}
 
 		if((Commutator.commutationMode == COMM_MODE_SINE) && (Commutator.synchronized != 0)){
@@ -894,7 +894,7 @@ void TIM1_CC_IRQHandler(void)
 			// Bridge FETs for Motor Phase U
 			if (BH1) {
 				TIM1->CCR1 = pwm>>1;
-				TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+				TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
 			} else {
 				TIM1->CCR1 = 0;
 				if (BL1){
@@ -907,7 +907,7 @@ void TIM1_CC_IRQHandler(void)
 			// Bridge FETs for Motor Phase V
 			if (BH2) {
 				TIM1->CCR2 = pwm>>1;
-				TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+				TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
 			} else {
 				TIM1->CCR2 = 0;
 				if (BL2){
@@ -920,7 +920,7 @@ void TIM1_CC_IRQHandler(void)
 			// Bridge FETs for Motor Phase W
 			if (BH3) {
 				TIM1->CCR3 = pwm>>1;
-				TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+				TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
 			} else {
 				TIM1->CCR3 = 0;
 				if (BL3){
@@ -929,6 +929,9 @@ void TIM1_CC_IRQHandler(void)
 					TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
 				}
 			}
+
+			// For Current measurement
+			//TIM1->CCR4 = pwm>>2;
 		}
 		else{
 
@@ -952,35 +955,6 @@ void TIM1_CC_IRQHandler(void)
 	}
 
 	s32 raw;
-
-//	ADC.currentMeasure_raw[0] =
-
-	raw = ADC1->JDR1 - ADC.currentMeasure_unitsOffset;
-	if(raw < 0)
-		raw = 0;
-	ADC.currentMeasure_milivolt[0] = raw * ADC.currentMeasure_uVoltsPerUnit / 1000;
-	raw = ADC.currentMeasure_milivolt[0] - ADC.currentMeasure_mVOffset;
-	if(raw < 0)
-		raw = 0;
-	ADC.currentMeasure_miliampere[0] = raw * ADC.currentMeasure_uAmperesPermV / 1000;
-
-	raw = ADC1->JDR2 - ADC.currentMeasure_unitsOffset;
-	if(raw < 0)
-		raw = 0;
-	ADC.currentMeasure_milivolt[1] = raw * ADC.currentMeasure_uVoltsPerUnit / 1000;
-	raw = ADC.currentMeasure_milivolt[1] - ADC.currentMeasure_mVOffset;
-	if(raw < 0)
-		raw = 0;
-	ADC.currentMeasure_miliampere[1] = raw * ADC.currentMeasure_uAmperesPermV / 1000;
-
-
-//	NFComBuf.ReadDeviceVitals.data[2] = ADC1->JDR1;
-//	NFComBuf.ReadDeviceVitals.data[3] = ADC.currentMeasure_milivolt[0];
-//	NFComBuf.ReadDeviceVitals.data[4] = ADC.currentMeasure_miliampere[0];
-//
-//	NFComBuf.ReadDeviceVitals.data[5] = ADC1->JDR2;
-//	NFComBuf.ReadDeviceVitals.data[6] = ADC.currentMeasure_milivolt[1];
-//	NFComBuf.ReadDeviceVitals.data[7] = ADC.currentMeasure_miliampere[1];
 }
 
 void MOTOR_SetPWM(s16 pwm) {

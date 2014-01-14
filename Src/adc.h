@@ -15,17 +15,18 @@ typedef struct{
 	vu16 milivolt[ADC_VoltageChannels];
 	vu16 mvTreshold[ADC_VoltageChannels];
 	vu8 digital[ADC_DigitalBytes];
-	u32 uVoltsPerUnit;
-	u16 unitsOffset;
-	u16 logicZeroMax_mV;
-	u16 logicOneMin_mV;
-	u32 currentMeasure_raw[ADC_CurrentChannels];
-	u32 currentMeasure_uVoltsPerUnit;
-	u16 currentMeasure_unitsOffset;
-	u16 currentMeasure_milivolt[ADC_CurrentChannels];
-	u32 currentMeasure_uAmperesPermV;
-	u16 currentMeasure_mVOffset;
+	s32 uVoltsPerUnit;
+	s16 unitsOffset;
+	s16 logicZeroMax_mV;
+	s16 logicOneMin_mV;
+	s32 currentMeasure_raw[ADC_CurrentChannels];
+	s32 currentMeasure_uVoltsPerUnit;
+	s16 currentMeasure_unitsOffset;
+	s16 currentMeasure_milivolt[ADC_CurrentChannels];
+	s32 currentMeasure_uAmperesPermV;
+	s16 currentMeasure_mVOffset;
 	s32 currentMeasure_miliampere[ADC_CurrentChannels];
+	s32 currentMeasure_miliampereInsensitivity;
 } ADC_St;
 
 void ADC_Config(void);
