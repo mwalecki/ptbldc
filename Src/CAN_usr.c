@@ -30,7 +30,7 @@ void setPWM(int16_t pwm) {
 }
 
 void setTrq(int16_t trq) {
-
+	NFComBuf.SetDrivesCurrent.data[0] = trq;
 }
 
 void setVel(int32_t vel) {

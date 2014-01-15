@@ -10,6 +10,8 @@
 #include "encoder.h"
 #include "commutator.h"
 
+
+extern ADC_St				ADC;
 extern MOTOR_St				Motor;
 extern uint16_t 			serialNumber;
 extern NF_STRUCT_ComBuf 	NFComBuf;
@@ -238,6 +240,11 @@ uint8_t MYSCPI_Interpreter(volatile uint8_t *rxBuf, volatile uint8_t *rxPt, vola
 	else
 	_GROUP(":SYNC")
 		_GET_SET_MEMBER(Motor.synchroIncrement, ":SP")
+	_ENDGROUP
+
+	else
+	_GROUP(":ADC")
+		_GET_SET_MEMBER(ADC.currentMeasure_mVOffset, ":OFFS");
 	_ENDGROUP
 
 	else

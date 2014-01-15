@@ -79,6 +79,8 @@
 #define EEADDR_SPEED_FF_COEF_A 60
 #define EEADDR_SPEED_FF_COEF_B 61
 
+#define EEADDR_ADC_CURR_MVOFFS 62
+
 void eebackup_Recover(void);	
 void eebackup_SaveAll(void);
 void eebackup_SaveInitialValues(void);

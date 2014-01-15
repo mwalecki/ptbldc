@@ -127,7 +127,7 @@ void ADCwithDMA_Config(void){
 
 	ADC.currentMeasure_uVoltsPerUnit = 1217;
 	ADC.currentMeasure_unitsOffset = 12;
-	ADC.currentMeasure_mVOffset = 2500;
+	//ADC.currentMeasure_mVOffset = 2500; // User configurable
 	ADC.currentMeasure_uAmperesPermV = -9302;
 	ADC.currentMeasure_miliampereInsensitivity = 10;
 	// 215mV = -2000mA

@@ -3,7 +3,10 @@
 #include "nf/nfv2.h"
 #include "commutator.h"
 #include "motor.h"
+#include "adc.h"
 	 
+
+extern ADC_St				ADC;
 extern uint16_t				serialNumber;
 extern SERVO_St				Servo;
 extern COMMUTATOR_St			Commutator;
@@ -57,6 +60,8 @@ void eebackup_Recover(void)
 
 	Motor.speedFFCoefA = EEPROM_Read(EEADDR_SPEED_FF_COEF_A);
 	Motor.speedFFCoefB = EEPROM_Read(EEADDR_SPEED_FF_COEF_B);
+
+	ADC.currentMeasure_mVOffset = EEPROM_Read(EEADDR_ADC_CURR_MVOFFS);
 }
 
 void eebackup_SaveAll(void)
@@ -103,6 +108,8 @@ void eebackup_SaveAll(void)
 
 	EEPROM_Write(EEADDR_SPEED_FF_COEF_A, (u16) Motor.speedFFCoefA);
 	EEPROM_Write(EEADDR_SPEED_FF_COEF_B, (u16) Motor.speedFFCoefB);
+
+	EEPROM_Write(EEADDR_ADC_CURR_MVOFFS, (u16) ADC.currentMeasure_mVOffset);
 }
 
 void eebackup_SaveInitialValues(void)
