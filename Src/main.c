@@ -103,19 +103,31 @@ int main(void)
 	//#### MAIN LOOP ####//
 	while (1){
 		if(STDownCnt[ST_CommandWD].tick){
-			if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_SPEED)
+			if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_SPEED){
 				NFComBuf.SetDrivesSpeed.data[0] = 0;
-			if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_PWM)
+			}
+			else if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_POSITION){
+				// Keep the last set position
+			}
+			else if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_SYNC_POS0){
+				// Just finish the homing
+			}
+			else if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_CURRENT){
+				NFComBuf.SetDrivesCurrent.data[0] = 0;
+			}
+			else if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_SYNC_CURRENT0){
+				NFComBuf.SetDrivesCurrent.data[0] = 0;
+			}
+			else if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_PWM){
 				NFComBuf.SetDrivesPWM.data[0] = 0;
-			if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_SYNC_PWM0)
+			}
+			else if(NFComBuf.SetDrivesMode.data[0] == NF_DrivesMode_SYNC_PWM0){
 				NFComBuf.SetDrivesPWM.data[0] = 0;
-			if(NFComBuf.SetDrivesMode.data[1] == NF_DrivesMode_SPEED)
-				NFComBuf.SetDrivesSpeed.data[1] = 0;
-			if(NFComBuf.SetDrivesMode.data[1] == NF_DrivesMode_PWM)
-				NFComBuf.SetDrivesPWM.data[1] = 0;
-			if(NFComBuf.SetDrivesMode.data[1] == NF_DrivesMode_SYNC_PWM0)
-				NFComBuf.SetDrivesPWM.data[1] = 0;
-			STDownCnt[ST_CommandWD].tick = 0;
+			}
+			else{
+				NFComBuf.SetDrivesMode.data[0] = NF_DrivesMode_ERROR;
+				NFComBuf.SetDrivesMode.data[1] = NF_DrivesMode_ERROR;
+			}
 		}
 		//#### #### SYSTICK EVENT FOR STATUS LED 
 		if(STDownCnt[ST_StatusLed].tick){	
@@ -138,22 +150,18 @@ int main(void)
 			}
 			if(NFComBuf.SetDrivesMode.updated){
 				// MOTORS_Proc() gets these values directly from NFComBuf.
-				ST_Reset(ST_CommandWD);
 				NFComBuf.SetDrivesMode.updated = 0;
 			}
 			if(NFComBuf.SetDrivesPWM.updated){
 				// MOTORS_Proc() gets these values directly from NFComBuf.
-				ST_Reset(ST_CommandWD);
 				NFComBuf.SetDrivesPWM.updated = 0;
 			}
 			if(NFComBuf.SetDrivesSpeed.updated){
 				// MOTORS_Proc() gets these values directly from NFComBuf.
-				ST_Reset(ST_CommandWD);
 				NFComBuf.SetDrivesSpeed.updated = 0;
 			}
 			if(NFComBuf.SetDrivesPosition.updated){
 				// MOTORS_Proc() gets these values directly from NFComBuf.
-				ST_Reset(ST_CommandWD);
 				NFComBuf.SetDrivesPosition.updated = 0;
 			}
 			if(NFComBuf.SetDrivesMinPosition.updated){
@@ -179,6 +187,7 @@ int main(void)
 				NFComBuf.SetCurrentRegulator.updated = 0;
 			}
 			NFComBuf.dataReceived = 0;
+			ST_Reset(ST_CommandWD);
 		}
 
 		while(cbIsEmpty(&cbUsart1Received) == 0){

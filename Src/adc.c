@@ -180,6 +180,7 @@ void ADC1_2_IRQHandler(void)
 	NFComBuf.ReadDeviceVitals.data[4] = ADC.currentMeasure_milivolt[0];
 	NFComBuf.ReadDeviceVitals.data[6] = ADC.currentMeasure_miliampere[0];
 	NFComBuf.ReadDeviceVitals.data[7] = -ADC.currentMeasure_miliampere[0];
+	NFComBuf.ReadDrivesCurrent.data[0] = ADC.currentMeasure_miliampere[0];
 	/* Clear ADC1 JEOC pending interrupt bit */
 	ADC_ClearITPendingBit(ADC1, ADC_IT_JEOC);
 	/* Reset PC.06 pin */

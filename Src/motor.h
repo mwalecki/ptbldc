@@ -68,6 +68,7 @@ typedef struct{
 
 //##                                      #### ######## ################ PROTOTYPES:
 
+inline void motorSetCurrent(void);
 inline void motorSetSynchronizationSpeed(void);
 inline void motorSpeedToPosition(void);
 inline void motorTargetPositionAndIncrementToPosition(void);

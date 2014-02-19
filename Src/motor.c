@@ -256,7 +256,7 @@ void MOTOR_Proc(void) {
 		motorPWMpositionLimit();
 		break;
 	case NF_DrivesMode_CURRENT:
-		Motor.setCurrent = NFComBuf.SetDrivesCurrent.data[0];
+		motorSetCurrent();
 		break;
 	default:
 		Motor.setPWM = 0;
@@ -277,6 +277,16 @@ void MOTOR_Proc(void) {
 
 	// For regulator tuning purposes
     NFComBuf.ReadDeviceVitals.data[0] = Motor.setPWM;
+}
+
+inline void motorSetCurrent(void){
+	if(Motor.previousMode != NF_DrivesMode_CURRENT){
+		NFComBuf.SetDrivesCurrent.data[0] = 0;
+		Motor.setCurrent = 0;
+	}
+	else {
+		Motor.setCurrent = NFComBuf.SetDrivesCurrent.data[0];
+	}
 }
 
 inline void motorSetSynchronizationSpeed(void) {
