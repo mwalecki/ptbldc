@@ -128,6 +128,7 @@ int main(void)
 				NFComBuf.SetDrivesMode.data[0] = NF_DrivesMode_ERROR;
 				NFComBuf.SetDrivesMode.data[1] = NF_DrivesMode_ERROR;
 			}
+			STDownCnt[ST_CommandWD].tick = 0;
 		}
 		//#### #### SYSTICK EVENT FOR STATUS LED 
 		if(STDownCnt[ST_StatusLed].tick){	
